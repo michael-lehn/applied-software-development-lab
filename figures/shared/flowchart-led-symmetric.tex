@@ -1,0 +1,21 @@
+% Flowchart of the modified LED program with two NOP instructions
+\begin{tikzpicture}[node distance=0.7cm and 0.8cm]
+\node (step1) [flowbox]
+    {Hex: \texttt{52 9a}\\\small Use pin 2 as output\\\small 2 cycles};
+\node (step2) [flowbox, below=of step1]
+    {Hex: \texttt{5a 9a}\\\small Set pin 2 \texttt{HIGH}\\\small 2 cycles};
+\node (step3) [flowbox, below=of step2]
+    {Hex: \texttt{00 00}\\\small Do nothing\\\small 1 cycle};
+\node (step4) [flowbox, below=of step3]
+    {Hex: \texttt{00 00}\\\small Do nothing\\\small 1 cycle};
+\node (step5) [flowbox, below=of step4]
+    {Hex: \texttt{5a 98}\\\small Set pin 2 \texttt{LOW}\\\small 2 cycles};
+\node (step6) [flowjump, below=of step5]
+    {Hex: \texttt{fb cf}\\\small Back 4 instructions\\\small 2 cycles};
+\draw [flowarrow] (step1) -- (step2);
+\draw [flowarrow] (step2) -- (step3);
+\draw [flowarrow] (step3) -- (step4);
+\draw [flowarrow] (step4) -- (step5);
+\draw [flowarrow] (step5) -- (step6);
+\draw [flowarrow] (step6.east) -- ++(1.5,0) |- (step2.east);
+\end{tikzpicture}

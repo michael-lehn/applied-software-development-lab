@@ -1,0 +1,15 @@
+% Flowchart of the first LED program (four instructions, with clock cycles)
+\begin{tikzpicture}[node distance=0.7cm and 0.8cm]
+\node (step1) [flowbox]
+    {Hex: \texttt{52 9a}\\\small Use pin 2 as output\\\small 2 cycles};
+\node (step2) [flowbox, below=of step1]
+    {Hex: \texttt{5a 9a}\\\small Set pin 2 \texttt{HIGH}\\\small 2 cycles};
+\node (step3) [flowbox, below=of step2]
+    {Hex: \texttt{5a 98}\\\small Set pin 2 \texttt{LOW}\\\small 2 cycles};
+\node (step4) [flowjump, below=of step3]
+    {Hex: \texttt{fd cf}\\\small Back 2 instructions\\\small 2 cycles};
+\draw [flowarrow] (step1) -- (step2);
+\draw [flowarrow] (step2) -- (step3);
+\draw [flowarrow] (step3) -- (step4);
+\draw [flowarrow] (step4.east) -- ++(1.5,0) |- (step2.east);
+\end{tikzpicture}

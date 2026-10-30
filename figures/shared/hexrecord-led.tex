@@ -1,0 +1,15 @@
+% First record of led_pin2.hex with its fields highlighted
+\begin{tikzpicture}
+\node[inner sep=0] (rec) {\ttfamily\setlength\fboxsep{2pt}%
+  \colorbox{gray!20}{\strut:}\hspace{-0.5pt}%
+  \colorbox{blue!20}{\strut08}\hspace{-0.5pt}%
+  \colorbox{cyan!20}{\strut0000}\hspace{-0.5pt}%
+  \colorbox{violet!20}{\strut00}\hspace{-0.5pt}%
+  \colorbox{green!10}{\strut529A5A9A5A98FDCF}\hspace{-0.5pt}%
+  \colorbox{red!20}{\strut5A}};
+\node[below=2pt of rec, inner sep=0, font=\ttfamily\scriptsize] {%
+  \textcolor{blue}{\textbf{08}} = number of data bytes,\enspace
+  \textcolor{cyan}{\textbf{0000}} = start address,\enspace
+  \textcolor{violet}{\textbf{00}} = record type (data),\enspace
+  \textcolor{red}{\textbf{5A}} = checksum};
+\end{tikzpicture}
