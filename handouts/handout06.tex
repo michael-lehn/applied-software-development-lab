@@ -1,0 +1,1334 @@
+% Applied Software Development Lab -- Lab Handout 6: Moving pictures
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 6".
+\documentclass{aslab}
+\sethandout{6}{Moving pictures}
+\graphicspath{{../figures/handout06/}{../figures/shared/}}
+
+%% Lists used in this handout
+% "A)" items (bold titles, text at +18bp)
+\newlist{letters}{enumerate}{3}
+\setlist[letters]{label={\Alph*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+% "•" items with the text at +9bp
+\newlist{dotlist}{itemize}{3}
+\setlist[dotlist]{label={\textbf{\textbullet}},leftmargin=9bp,labelsep=*,
+  align=left,labelindent=0pt}
+% dash with the blue color of the original (two items on page 4)
+\makeatletter
+\newcommand*\bluedash{\textcolor{aslabblue}{\aslab@dash}}
+\makeatother
+
+%% Input lines "(1) code": monospaced label, code at +4 characters
+\newcommand*\inp[1]{\makebox[26.4bp][l]{\ttfamily(#1)}}
+
+%% Python listings with the colors of the original
+%%   @..@ orange (line numbers, keywords), ~..~ cyan (built-ins, names),
+%%   ^..^ red (numbers), !..! magenta (import), ?..? purple (comments)
+\lstdefinestyle{py}{style=aslab,
+  moredelim=[is][\color{codeorange}]{@}{@},
+  moredelim=[is][\color{codecyan}]{~}{~},
+  moredelim=[is][\color{codered}]{^}{^},
+  moredelim=[is][\color{codemagenta}]{!}{!},
+  moredelim=[is][\color{codepurple}]{?}{?}}
+\newcommand*\codexi[1]{\fontsize{11bp}{#1bp}\ttfamily\lineskiplimit=-\maxdimen}
+
+% keep the baseline pitch fixed even next to tall inline code boxes
+\lineskiplimit=-\maxdimen
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{124.0}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=13]{138.5}
+{\bfseries\color{aslabblue}
+\begin{dashlist}
+\item Python basics: tuples
+\item First steps with PyGame
+\item Further steps toward object-oriented programming
+\end{dashlist}\par}
+\end{region}
+
+\begin{region}{191.5}
+\heading{Step 1: Cloning your own repository}
+\end{region}
+
+\begin{region}[pitch=14.1]{219.1}
+Today we work with Python only. The microcontroller will come back into play
+later, though (in the truest sense of the word). So that your code does not
+get lost, first clone your repository.
+\end{region}
+
+\begin{region}[pitch=12.8]{261.8}
+\textbf{As always:}
+\begin{dashlist}
+\item Open two terminals (left for editing, right for running commands).
+\end{dashlist}
+\end{region}
+
+\begin{region}{301.2}
+\subheading{Left terminal (editing)}
+\end{region}
+
+\begin{region}[pitch=13.55]{315.5}
+\begin{letters}
+\item \textbf{Clone the repository and change the directory}\\
+  Clone the repository:\\
+  \code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}
+\item \textbf{Change the directory:}\\
+  \code{cd asp-ulm/python}
+\end{letters}
+\end{region}
+
+\begin{region}{395.6}
+\subheading{Right terminal (running commands)}
+\end{region}
+
+\begin{region}[pitch=12.3]{408.6}
+\begin{letters}
+\item \textbf{Change the directory}\\
+  \code{cd asp-ulm/python}
+\end{letters}
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Step 2: Python basics (lists vs.\ tuples)}
+\end{region}
+
+\begin{region}[pitch=14]{98.0}
+\textbf{Goal:} In the next step, we will use the PyGame module for drawing.
+PyGame often uses so-called \textbf{tuples} as a data structure -- for
+example, for the size of the window or the position of a graphical
+object.\\
+Before we really get going with PyGame, let us get familiar with these
+\textbf{tuples} and how they differ from \textbf{lists}.
+\end{region}
+
+\begin{region}{181.4}
+\textbf{Preparation:} In the right window, start a Python shell with the
+command \code{python}
+\end{region}
+
+\begin{region}{208.8}
+\begin{tasks}
+\item \textbf{Assignment with several variables}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{235.3}
+Enter the following in the shell:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=15.4]{249.9}
+\inp{1}\code{x, y = 100, 200}\\
+\inp{2}\code{x}\\
+\inp{3}\code{y}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{296.1}
+You should observe that the first statement assigns the values \code{100}
+and \code{200} to \code{x} and \code{y}, respectively:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{323.8}
+\begin{codeblock}[basicstyle=\codexi{13.2}]
+>>> x, y = 100, 200
+>>> x
+100
+>>> y
+200
+\end{codeblock}
+\end{region}
+
+\begin{region}{390.5}
+\begin{tasks}[start=2]
+\item \textbf{Lists: a mutable data structure}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{417.3}
+Now we create a list \code{pos} and play around with it a little:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=15.4]{432.0}
+\inp{1}\code{pos = [x,y]}\\
+\inp{2}\code{pos[0]}\\
+\inp{3}\code{pos[1]}\\
+\inp{4}\code{pos}\\
+\inp{5}\code{pos.append(42)}\\
+\inp{6}\code{pos}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.9]{522.9}
+As you already know from the online Python course, with a list you can:
+\begin{dotlist}
+\item access individual elements
+\item add elements
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{576.6}
+\textbf{In this example, you observe:}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{590.2}
+\begin{codeblock}[basicstyle=\codexi{13.2}]
+>>> pos = [x,y]
+>>> pos[0]
+100
+>>> pos[1]
+200
+>>> pos
+[100, 200]
+>>> pos.append(42)
+>>> pos
+[100, 200, 42]
+\end{codeblock}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\begin{tasks}[start=3]
+\item \textbf{Tuples: an immutable data structure}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.05]{96.9}
+Now we create a \textbf{tuple} \code{pos} and observe that you can work with
+it in a similar way as with a \textbf{list}.\\
+However, a \textbf{tuple} only supports operations that do \emph{not modify}
+\code{pos}. This is why \textbf{tuples} are often used to represent fixed
+values (e.g., the size of a window or a fixed position).
+\end{region}
+
+\begin{region}[x=74.7,right=0]{179.4}
+Enter the following in the shell:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=15.4]{209.4}
+\inp{1}\code{pos = (x,y)}\\
+\inp{2}\code{pos[0]}\\
+\inp{3}\code{pos[1]}\\
+\inp{4}\code{pos}\\
+\inp{5}\code{pos[0] = 3}\\
+\inp{6}\code{pos.append(42)}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.0]{313.6}
+This is what happened:
+\begin{dotlist}
+\item With (1), the \textbf{tuple} \code{pos} with two elements was created
+  (for this, you use round instead of square brackets).
+\item In (2) and (3), the elements were accessed -- this works exactly as
+  with a \textbf{list}.
+\item In (5), an attempt was made to modify the first element -- this is
+  \emph{not allowed} for a \textbf{tuple}.
+\item For the same reason, \code{.append()} is not supported either, so a
+  tuple cannot be extended.
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{437.8}
+\textbf{Example output:}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{451.4}
+\begin{codeblock}[basicstyle=\codexi{13.2}]
+>>> pos = (x,y)
+>>> pos[0]
+100
+>>> pos[1]
+200
+>>> pos
+(100, 200)
+>>> pos[0] = 3
+Traceback (most recent call last):
+  File "<python-input-27>", line 1, in <module>
+    pos[0] = 3
+    ~~~^^^
+TypeError: 'tuple' object does not support item assignment
+>>> pos.append(42)
+Traceback (most recent call last):
+  File "<python-input-28>", line 1, in <module>
+    pos.append(42)
+    ^^^^^^^^^^
+\end{codeblock}
+\end{region}
+
+% set in the body font, as in the original
+\begin{region}[x=74.7,right=0]{688.8}
+AttributeError: \textquotesingle tuple\textquotesingle\ object has no attribute \textquotesingle append\textquotesingle
+\end{region}
+
+\begin{region}[pitch=14.35]{716.0}
+\textbf{Conclusion:}
+\begin{dashlist}
+\item \textbf{Tuples} are suitable for \emph{fixed values} that are not
+  supposed to change in the program.
+\item In \emph{PyGame}, for example, you will often use tuples to pass the
+  window size or a fixed position.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{69.4}
+\heading{Step 3: First steps with PyGame}
+\end{region}
+
+\begin{region}[pitch=13.83]{98.0}
+\textbf{Goal:} In this step, we will use the \textbf{SDL} library
+(\emph{Simple DirectMedia Layer}).\\
+\textbf{SDL} is a library written in C that allows direct access to the
+\textbf{graphics card}, the \textbf{sound}, and other \textbf{hardware
+components}. This makes it ideal for programming games or other graphical
+applications.\\
+However, we will use \textbf{SDL not directly}, but through the
+\textbf{Python library PyGame}. \textbf{PyGame} is a so-called
+\textbf{wrapper} for SDL: it provides us with a convenient Python interface
+that lets us use SDL very easily and efficiently.\\
+In this step, we will first learn:
+\end{region}
+
+\begin{region}[pitch=14.3]{207.9}
+\begin{dashlist}
+\item how to create a window of a \textbf{specific size} with PyGame, and
+\item how to draw a \textbf{graphical object} in it (here: a yellow filled
+  circle as the ``ball'').
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.3]{237.4}
+The main point is to understand how a typical PyGame program is
+\textbf{structured}:
+\end{region}
+
+\begin{region}[pitch=14.6]{265.0}
+\begin{dashlist}
+\item[\bluedash] Such a program usually consists of an \textbf{initialization}
+  and a \textbf{main loop}, in each iteration of which a \textbf{scene} is
+  drawn.
+\item[\bluedash] This is the \textbf{basic structure} that we will extend step
+  by step later -- for example, \textbf{to move} the ball.
+\end{dashlist}
+\end{region}
+
+\begin{region}{336.2}
+\subheading{Preparation:}
+\end{region}
+
+\begin{region}[pitch=13.2]{363.0}
+In the left terminal, use the editor of your choice to create a file
+\code{breakout.py} with the following content. (The empty lines are
+intentional -- we will fill them in bit by bit in the tasks.)
+\end{region}
+
+\begin{region}[pitch=12]{416.0}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@  1 @!import! pygame
+@  2@
+@  3@
+@  4 @?# setup?
+@  5 @pygame.init()
+@  6@
+@  7 @width, height = ^800^, ^600^
+@  8 @screen = pygame.display.set_mode((width, height))
+@  9@
+@ 10 @ball_c = (^255^, ^255^, ^0^)
+@ 11 @ball_x, ball_y = ^400^, ^300^
+@ 12@
+@ 13 @?# draw stuff?
+@ 14@
+@ 15 @pygame.draw.circle(screen, ball_c, (ball_x, ball_y), ^5^)
+@ 16@
+@ 17@
+@ 18@
+@ 19 @?# done?
+@ 20 @pygame.quit()
+\end{codeblock}
+\end{region}
+
+\begin{region}{669.8}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{696.6}
+\begin{tasks}
+\item Run the program in the right terminal with the command
+  \code{python breakout.py}. A new window should appear briefly, but it
+  disappears again in a flash.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{723.0}
+\begin{tasks}[start=2]
+\item So far, there has been no explanation of what the individual program
+  lines mean. But that is not very interesting at the moment anyway, as
+  long as you cannot see anything in the window.\\
+  So let us first make sure that the window does not disappear immediately:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{763.4}
+\begin{tasks}[label={\bfseries\arabic*.}]
+\item In \textbf{line 2}, insert the following line: \code{import time}
+\item In \textbf{line 17}, insert the following line: \code{time.sleep(5)}
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}[x=74.7,right=0,pitch=13.4]{68.8}
+If you now start the program again with \tcode{python breakout.py}, the
+window stays visible for 5~seconds.\\
+However, the window is still black and has no visible content.\\
+To make the visible result a little more interesting, insert the following
+line in \textbf{line 16}:\\
+\code{pygame.display.flip()}\\
+Run the program once more. Now, during those 5~seconds, you should see a
+yellow circle in the middle of the new window.
+\end{region}
+
+\begin{region}{176.6}
+\subheading{What the program does:}
+\end{region}
+
+\begin{region}[pitch=13.5]{189.5}
+\begin{dashlist}
+\item With \code{import pygame}, the module \code{pygame} is imported.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.9]{203.0}
+\begin{dashlist}
+\item With \code{pygame.init()}, the necessary preparations are made so
+  that you can work with the graphics card, the keyboard, or the sound card
+  at all.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.84]{229.7}
+\begin{dashlist}
+\item With \code{pygame.display.set_mode}, a window is created that you can
+  then draw into. The width and height of the window are passed to the
+  function -- as a so-called tuple, i.e., a pair of numbers such as
+  \code{(800, 600)}.\\
+  The function returns a \textbf{variable} that you can later use to draw
+  into this window. More precisely, it is a so-called \textbf{object} of
+  type \emph{Surface} -- which, in the end, is also nothing but a special
+  variable that \textbf{pygame} uses internally to manage the window. For
+  us it is enough to know: this variable will later be passed as the first
+  argument to drawing functions such as \code{pygame.draw.circle}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.56]{339.4}
+\begin{dashlist}
+\item With \code{pygame.draw.circle}, you can draw a circle. The function
+  expects four arguments:
+  \begin{dashlist}
+  \item the variable that represents the window (i.e., \emph{where} to
+    draw),
+  \item the color of the circle -- here an RGB tuple such as
+    \code{(255, 255, 0)} for yellow,
+  \item the center of the circle -- as a pair of numbers \code{(x, y)} for
+    the position on the screen,
+  \item the radius of the circle -- i.e., how large it should be.
+  \end{dashlist}
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.46]{420.9}
+\begin{dashlist}
+\item \textbf{pygame} (or rather the underlying \textbf{SDL}) uses a
+  technique called \textbf{double buffering}. You can think of it as two
+  drawing surfaces: one of them is visible, the other one is ``behind the
+  scenes''. You always draw on the hidden surface, and when everything is
+  finished, \code{pygame.display.flip()} switches to the new surface. This
+  prevents you from watching the program while it draws -- with
+  animations, this would otherwise lead to ugly flickering or stuttering.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.55]{501.0}
+\begin{dashlist}
+\item At the end, the program calls \code{pygame.quit()}. This is not
+  strictly necessary, because everything is cleaned up anyway when the
+  program terminates. But it is good style to release the resources
+  occupied by pygame.
+\end{dashlist}
+\end{region}
+
+\begin{region}{556.5}
+\subheading{To conclude this step:}
+\end{region}
+
+\begin{region}[pitch=14.3]{585.5}
+Add the file to the repository, create a commit, and push it with the
+following commands:
+\end{region}
+
+\begin{region}[pitch=13.2]{627.6}
+\code{git add breakout.py}\\
+\code{git commit -a -m "first steps with pygame"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\heading{Step 4: Structure of a PyGame program and moving pictures}
+\end{region}
+
+\begin{region}[pitch=13.4]{96.9}
+\textbf{Goal:}\\
+Our PyGame program should not simply run for a certain number of seconds,
+but until it is terminated by the user -- either by closing the window (by
+clicking the \code{X} at the top right) or by pressing a specific key, for
+example \code{Q}.
+\end{region}
+
+\begin{region}[pitch=14.17]{177.7}
+\textbf{Preparation:}\\
+Below you see slightly adapted code for \code{breakout.py} with
+\textbf{didactic empty lines} that we will fill in step by step in the
+tasks. The main change is the \code{while}\textbf{ loop} in line~16. It runs
+as long as the variable \code{running} has the value \code{True}. In this
+version, \code{running} is always \code{True} for now. So the statements in
+lines 17 to 28 are executed over and over again in an \textbf{infinite
+loop}. Another change is that in line~28, after the drawing surface has
+been made visible (\code{pygame.display.flip()}), a pause of \textbf{1/30
+second} has been added. As a result, the picture is updated \textbf{at
+about 30 frames per second (FPS)}. Here is the prepared code:
+\end{region}
+
+\begin{region}[pitch=12]{317.8}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@  1 @!import! pygame
+@  2 @!import! time
+@  3@
+@  4 @?# setup?
+@  5 @pygame.init()
+@  6@
+@  7 @width, height = ^800^, ^600^
+@  8 @screen = pygame.display.set_mode((width, height))
+@  9@
+@ 10 @ball_c = (^255^, ^255^, ^0^)
+@ 11 @ball_x, ball_y = ^300^, ^300^
+@ 12@
+@ 13@
+@ 14 @?# draw stuff?
+@ 15 @running = ~True~
+@ 16 while@ running:
+@ 17@
+@ 18@
+@ 19@
+@ 20@
+@ 21@
+@ 22@
+@ 23@
+@ 24 @    pygame.draw.circle(screen, ball_c, (ball_x, ball_y), ^5^)
+@ 25@
+@ 26@
+@ 27 @    pygame.display.flip()
+@ 28 @    time.sleep(^1^/^30^)
+@ 29@
+@ 30 @?# done?
+@ 31 @pygame.quit()
+\end{codeblock}
+\end{region}
+
+\begin{region}{714.5}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=14.25]{728.1}
+\begin{tasks}
+\item Adapt \code{breakout.py} as shown above and test it in the right
+  terminal. The program now runs in an \textbf{infinite loop} and, for the
+  moment, can only be stopped by \textbf{aborting} it in the terminal with
+  \code{Control-C}.
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}[pitch=13.15]{68.5}
+\begin{tasks}[start=2]
+\item To make it possible to terminate the program by closing the window,
+  insert the following lines. Make sure that the lines are indented so that
+  they belong to the while block of the loop in line~16:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{112.3}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 17 @    @for@ event @in@ pygame.event.get():
+@ 18 @        @if@ event.type == pygame.QUIT:
+@ 19 @            running = ~False~
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.93]{156.4}
+The function \code{pygame.event.get()} returns a \textbf{list of so-called
+events}. An event represents an occurrence -- for example, closing a
+window, pressing a key, etc. Test the program before you get a first
+\textbf{crash course in ``What is an object?''} afterwards.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.9]{214.6}
+At this point, it can hardly be kept secret any longer: events are
+represented as \textbf{objects}. So far, we have mostly avoided the term
+object and talked about variables instead. That is not wrong either -- an
+object is basically a \textbf{special kind of variable}.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.9]{272.8}
+\textbf{What makes objects special?} An object can consist \textbf{of several
+components}. You can think of it as a \textbf{bundle of values} that belong
+together. Each of these components can in turn be a variable or another
+object. The common term for these components is \textbf{attributes}.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.27]{328.8}
+One such \textbf{attribute} of an event object is, e.g., \code{type}. If an
+event represents the \textbf{closing of a window}, this attribute has the
+value \code{pygame.QUIT}. In this case, the code above causes
+\code{running} to be set to \code{False} -- as a result, the \textbf{outer
+while loop} is exited, and the program terminates.
+\end{region}
+
+\begin{region}[pitch=13.7]{385.9}
+\begin{tasks}[start=3]
+\item When a key is pressed on the keyboard, this creates an
+  \textbf{event object} whose attribute type has the value
+  \code{pygame.KEYDOWN}. Another attribute, \code{key}, stores which key was
+  pressed. For example, the value \code{pygame.K_q} represents the key
+  \textbf{Q}.\\
+  Change the program as follows:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{444.4}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 17 @    @for@ event @in@ pygame.event.get():
+@ 18 @        @if@ event.type == pygame.QUIT:
+@ 19 @            running = ~False~
+@ 20 @        @elif@ event.type == pygame.KEYDOWN:
+@ 21 @            @if@ event.key == pygame.K_q:
+@ 22 @                running = ~False~
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{524.8}
+Now it should also be possible to terminate the program by pressing the
+\textbf{Q} key.
+\end{region}
+
+\begin{region}[pitch=14.3]{539.1}
+\begin{tasks}[start=4]
+\item To get some \textbf{movement} into the game, we change the
+  \textbf{position of the ball} in every frame. First, we define a
+  \textbf{velocity} for the ball in the x and y directions:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{570.9}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 12 @ball_vx, ball_vy = -^1^, ^2^
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{591.4}
+The unit of velocity is ``\textbf{pixels per frame}'', because with the lines
+\end{region}
+
+\begin{region}[x=78.7,right=0]{608.9}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 25 @    ball_x += ball_vx
+@ 26 @    ball_y += ball_vy
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.2]{641.3}
+the \textbf{position} of the ball is updated after about \textbf{1/30
+second} each time. Test the program after this change -- the remaining
+\textbf{cosmetic flaw} will be fixed next.
+\end{region}
+
+\begin{region}[pitch=13.2]{668.8}
+\begin{tasks}[start=5]
+\item As it moves, the ball still leaves traces. The solution is simple:
+  when you draw a new frame, you start by clearing the canvas. Concretely,
+  in our case this means that we color it completely black. The RGB value
+  for black is (0,0,0), and the following line colors the drawing surface
+  black:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{725.8}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 23 @    pygame.Surface.fill(screen, (^0^, ^0^, ^0^))
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{745.0}
+The ball should now move without leaving any traces.
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}[pitch=14.3]{69.4}
+\begin{tasks}[start=6]
+\item At the moment, the ball still flies off \textbf{into nowhere}. With the
+  next change, it should be reflected at the \textbf{edges} of the window.
+  From now on, we no longer fill gaps in the program, but \textbf{add new
+  lines}.\\
+  Add the following lines directly \textbf{after line 26}:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{129.8}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 27 @    @if@ ball_x < ^0^ @or@ ball_x > width:
+@ 28 @        ball_vx *= -^1^
+@ 29 @    @if@ ball_y < ^0^ @or@ ball_y > height:
+@ 30 @        ball_vy *= -^1^
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.1]{187.5}
+The reflection is not perfect yet, but good enough for now:
+\begin{dotlist}
+\item If the ball has left the playing field on the \textbf{left or right},
+  the velocity in the \textbf{x direction} is reversed.
+\item If the ball has left the playing field at the \textbf{top or bottom},
+  the velocity in the \textbf{y direction} is reversed.
+\end{dotlist}
+For a \textbf{perfect reflection}, you would not only have to adjust the
+velocity, but also set the \textbf{position} correctly.\\
+But that is simple math -- we can add it later.
+\end{region}
+
+\begin{region}[pitch=14.11]{300.4}
+\begin{tasks}[start=7]
+\item The ball flies and bounces -- great! Now we still need a
+  \textbf{paddle}, i.e., a \textbf{rectangle}. This is a nice opportunity to
+  repeat and vary what we have just learned. In PyGame, a \textbf{paddle} is
+  simply a \textbf{rectangle} that is described by:
+  \begin{dotlist}
+  \item the coordinates of the \textbf{top left} corner and
+  \item a \textbf{width} and a \textbf{height}.
+  \end{dotlist}
+  Of course, you can also give a rectangle a \textbf{color}. To do this, we
+  first create a few \textbf{variables}. Add the following lines \textbf{after
+  line 12} (analogous to the variables for the ball):
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.6,right=0]{416.8}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 13 @paddle_c = (^0^, ^0^, ^255^)
+@ 14 @paddle_x, paddle_y = ^300^, ^570^
+@ 15 @paddle_w, paddle_h = ^100^, ^30^
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.6,right=0,pitch=14.3]{465.4}
+The paddle should be drawn in every frame. To do this, insert the following
+lines \textbf{after line 27} (i.e., \textbf{after the ball has been drawn}):
+\end{region}
+
+\begin{region}[x=78.6,right=0]{497.3}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 28 @    pygame.draw.rect(screen, paddle_c,
+ @29@                     (paddle_x, paddle_y, paddle_w, paddle_h))
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=14.27]{532.3}
+\begin{tasks}[start=8]
+\item Of course, the \textbf{paddle} should \textbf{be movable}. Later, we
+  will read the \textbf{serial interface} for this and will then be able to
+  change the position by turning the potentiometer. For today, the
+  \textbf{left} and \textbf{right} arrow keys will do for steering. We
+  already check in the code whether the \textbf{Q} key has been pressed.
+  Extend this check as follows:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{592.7}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 23 @        @elif@ event.type == pygame.KEYDOWN:
+@ 24 @            @if@ event.key == pygame.K_q:
+@ 25 @                running = ~False~
+@ 26 @            @elif@ event.key == pygame.K_LEFT:
+@ 27 @                paddle_x -= ^10^
+@ 28 @            @elif@ event.key == pygame.K_RIGHT:
+@ 29 @                paddle_x += ^10^
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{698.0}
+Test the program after this change. You should notice two things that are
+still annoying:
+\begin{dotlist}
+\item The paddle can be moved out of the window.
+\item If you hold down an arrow key, the position does not change
+  continuously -- you have to release the key and press it again each time.
+\end{dotlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}[pitch=13.57]{69.4}
+\begin{tasks}[start=9]
+\item It would be more convenient if, when you \textbf{hold down an arrow
+  key}, the paddle kept moving in the corresponding direction until you
+  release the key again. To do this, first remove the lines inserted in the
+  previous subtask (in my case, these were lines \textbf{26 to 29}).
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.8]{124.3}
+\textbf{Keyboard events} are only generated when a key is \textbf{pressed} or
+\textbf{released} -- \textbf{not} while a key is being \textbf{held down}. If
+there were events for that, far too many events would be generated.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{166.0}
+However, you can query \textbf{which keys are currently being held down} and
+then check whether the \textbf{arrow keys} are among them.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.8]{194.6}
+To do this, insert the following lines \textbf{after the for loop}. It is
+important that these lines belong \textbf{to the while loop}, but \textbf{not
+to the for loop} for the events! After all, the lines should also be
+executed when there is no event.
+\end{region}
+
+\begin{region}[x=74.7,right=0]{236.7}
+$\rightarrow$ So pay close attention to the \textbf{indentation depth} (in
+my case, 4 characters).
+\end{region}
+
+\begin{region}[x=78.7,right=0]{254.3}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 26 @    keys = pygame.key.get_pressed()
+@ 27 @    @if@ keys[pygame.K_LEFT]:
+@ 28 @        paddle_x -= ^10^
+@ 29 @    @if@ keys[pygame.K_RIGHT]:
+@ 30 @        paddle_x += ^10^
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.6]{332.3}
+With the function \code{get_pressed()} in line~26, you get a so-called
+\textbf{dictionary} in \code{keys}. This data structure is covered in more
+detail in the Python bridging course. Here it is enough to know that you
+can use it much like a \textbf{list} -- except that the \textbf{index} does
+not have to be a number.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.85]{386.5}
+For example, here \code{keys[pygame.K_LEFT]} and \code{keys[pygame.K_RIGHT]}
+access entries of \code{keys}. These values are either \code{True} or
+\code{False} -- depending on whether the corresponding key is currently
+\textbf{pressed or not}.
+\end{region}
+
+\begin{region}[pitch=14.3]{428.5}
+\begin{tasks}[start=10]
+\item Now we also solve the problem that the \textbf{paddle} can currently
+  still be moved \textbf{too far to the left} or \textbf{to the right}.\\
+  This is easy to do with the following \textbf{fix}, which you should insert
+  \textbf{after the position of the paddle may have been changed}:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=78.7,right=0]{488.9}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 31 @    @if@ paddle_x < ^0^:
+@ 32 @        paddle_x = ^0^
+@ 33 @    @if@ paddle_x + paddle_w > width:
+@ 34 @        paddle_x = width - paddle_w
+\end{codeblock}
+\end{region}
+
+\begin{region}{566.9}
+\subheading{To conclude this step:}
+\end{region}
+
+\begin{region}[pitch=14.4]{583.8}
+Add the file to the repository, create a commit, and push it with the
+following commands:
+\end{region}
+
+\begin{region}[pitch=13.2]{626.0}
+\code{git commit -a -m "ball and paddle hack"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{666.5}
+\heading{What comes next}
+\end{region}
+
+\begin{region}[pitch=14.3]{682.0}
+At this point, you could simply keep working on the game:
+\begin{dashlist}
+\item For example, make sure that the \textbf{paddle} actually \textbf{makes
+  the ball bounce off}.
+\item Or that you \textbf{lose the ball} when it flies out of the playing
+  field at the bottom.
+\end{dashlist}
+Unfortunately, though, I will play the \textbf{spoilsport} a little at this
+point -- and in the next steps show you instead \textbf{how to organize the
+code better}.\\
+To do this, we introduce a \textbf{class} \code{Paddle} and a class
+\code{Ball}.\\
+With this structure, further features can later be implemented \textbf{much
+more easily and clearly}.
+\end{region}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{69.4}
+\heading{Step 5: The class Paddle}
+\end{region}
+
+\begin{region}[pitch=14.08]{84.8}
+Our \textbf{paddle} consists of \textbf{data} and \textbf{operations} that
+manipulate this data:
+\begin{dashlist}
+\item \textbf{Data} are the variables: \code{paddle_x}, \code{paddle_y},
+  \code{paddle_w}, \code{paddle_h}, \code{paddle_c}.
+\item \textbf{Operations} are the code that moves the paddle \textbf{to the
+  left or right}, as well as the code \textbf{to draw} the paddle.
+\end{dashlist}
+In the current version, all of this is scattered all over the code. You may
+remember from the last lab handout that \textbf{global variables} can be
+encapsulated in a \textbf{class}. And you can also put \textbf{functions}
+into the class that manipulate these variables.
+\end{region}
+
+\begin{region}{195.8}
+Applied to the paddle, this could look like this:
+\end{region}
+
+\begin{region}[pitch=12]{211.4}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 14 class@ ~Paddle~:
+@ 15 @    c = (^0^, ^0^, ^255^)
+@ 16 @    w, h = ^100^, ^30^
+@ 17 @    x, y = (width - w) // ^2^, ^570^
+@ 18@
+@ 19 @    @def@ ~left~():
+@ 20 @        Paddle.x -= ^10^
+@ 21 @        @if@ Paddle.x < ^0^:
+@ 22 @            Paddle.x = ^0^
+@ 23@
+@ 24 @    @def@ ~right~():
+@ 25 @        Paddle.x += ^10^
+@ 26 @        @if@ Paddle.x + Paddle.w > width:
+@ 27 @            Paddle.x = width - Paddle.w
+@ 28@
+@ 29 @    @def@ ~draw~(surface):
+@ 30 @        pygame.draw.rect(surface, Paddle.c,
+@ 31 @                         (Paddle.x, Paddle.y, Paddle.w, Paddle.h))
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.3]{429.6}
+Replace the lines in which \code{paddle_x}, \code{paddle_y}, \code{paddle_w},
+\code{paddle_h}, and \code{paddle_c} were previously initialized with this
+code.
+\end{region}
+
+\begin{region}[pitch=13.8]{457.0}
+Once more, to \textbf{clarify} what this code does:
+\begin{dashlist}
+\item It initializes the global variables \code{Paddle.c}, \code{Paddle.x},
+  \code{Paddle.y}, \code{Paddle.w}, \code{Paddle.h}. You could also say that
+  it defines the class attributes \code{c}, \code{x}, \code{y}, \code{w},
+  \code{h} of \code{Paddle}.
+\item It defines the \textbf{functions} \code{Paddle.left} and
+  \code{Paddle.right}, which modify these variables so that the paddle
+  moves to the \textbf{left} or \textbf{right}.
+\item It defines the \textbf{function} \code{Paddle.draw}, which draws the
+  paddle at its current position on a drawing surface.
+\item The functions defined in the class could also be called the
+  \textbf{class methods} \code{left}, \code{right}, and \code{draw} of
+  \code{Paddle}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.62]{602.9}
+\subheading{Task: Make use of it!}
+Change the rest of the program so that the \textbf{paddle} is controlled
+via the \textbf{class methods}:
+\begin{dashlist}
+\item if the paddle is to \textbf{move to the left}, call
+  \code{Paddle.left()}.
+\item if the paddle is to \textbf{move to the right}, call
+  \code{Paddle.right()}.
+\item And call \code{Paddle.draw(screen)} to draw the paddle on the drawing
+  surface \code{screen}.
+\end{dashlist}
+This does not make the program better (the ball still flies through the
+paddle), but it makes it more readable. If everything works:\\
+\code{git commit -a -m "paddle class"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ==================================================================== 11 ==
+\begin{region}{69.4}
+\heading{Step 6: Basics of classes with multiple instances}
+\end{region}
+
+\begin{region}[pitch=14.25]{96.9}
+For the \textbf{ball}, we could -- as for the paddle -- also define a
+\textbf{class}. We now take the opportunity to introduce so-called
+\textbf{instantiable classes}. That sounds \textbf{fancy} at first, but it is
+quite simple:
+\end{region}
+
+\begin{region}[pitch=13.9]{141.9}
+It just means that you can create \textbf{several objects} from such a
+class.\\
+Or, to put it another way:\\
+$\rightarrow$ There can be \textbf{several balls} -- but only one
+\textbf{paddle}.
+\end{region}
+
+\begin{region}[pitch=13.8]{197.2}
+We first explore the \textbf{basic idea} in the \textbf{interactive Python
+shell}. Start it in the \textbf{right terminal} with the command
+\code{python} and first enter the following to define an \textbf{``empty''
+class} Ball:
+\end{region}
+
+\begin{region}[pitch=13.2]{251.4}
+\begin{codeblock}[basicstyle=\codexi{13.2}]
+class Ball:
+    pass
+\end{codeblock}
+\end{region}
+
+% "Then:" is set in the monospaced font, as in the original
+\begin{region}[pitch=13.2]{295.4}
+\tcode{Then:}\\
+\inp{1}\code{ball = Ball()}\\
+\inp{2}\code{print(type(ball))}\\
+\inp{3}\code{ball.x = 42}\\
+\inp{4}\code{print(ball.x)}
+\end{region}
+
+\begin{region}[pitch=13.7]{374.3}
+You should observe:
+\begin{dashlist}
+\item With (1), a new variable (aka \textbf{object}) \code{ball} was
+  defined. As (2) shows, it has the type \code{Ball}.
+\item In (3), an \textbf{attribute} \code{x} was added to the object
+  \code{ball} and initialized with \code{42}.
+\item In (4), this attribute \code{x} is output.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.2]{460.6}
+You can also put functions into a class that
+\begin{dashlist}
+\item attach attributes to the object,
+\item manipulate them, or
+\item read them.
+\end{dashlist}
+First, enter the following:
+\end{region}
+
+\begin{region}[pitch=13.2]{531.1}
+\begin{codeblock}[basicstyle=\codexi{13.2}]
+class Ball:
+    def init(ich, x):
+        ich.x = x
+    def print(ich):
+        print(f"mein x ist {ich.x}")
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.3]{601.2}
+Then\\
+\inp{1}\code{ball = Ball()}\\
+\inp{2}\code{Ball.init(ball, 123)}\\
+\inp{3}\code{Ball.print(ball)}
+\end{region}
+
+\begin{region}[pitch=13.37]{667.2}
+You should observe:
+\begin{dashlist}
+\item Now \code{ball.x} is initialized with \code{123}.
+\item The attribute \code{x} is then output.
+\item The advantage: here, the attribute \code{x} is only used and
+  \textbf{manipulated} \textbf{inside the functions}.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ==================================================================== 12 ==
+\begin{region}[pitch=13.3]{69.4}
+Now we create a \textbf{second ball} and this time call the functions
+\code{init} and \code{print} differently:\\
+\inp{1}\code{ball2 = Ball()}\\
+\inp{2}\code{ball2.init(456)}\\
+\inp{3}\code{ball2.print()}
+\end{region}
+
+\begin{region}[pitch=13.15]{148.7}
+You should observe:
+\begin{dashlist}
+\item \code{ball2.init(456)} has the same effect as
+  \code{Ball.init(ball2, 456)}.
+\item \code{ball2.print()} has the same effect as \code{Ball.print(ball2)}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.4]{203.0}
+\textbf{In fact}, this is exactly how Python \textbf{transforms} it
+internally:\\
+For the call \code{ball2.print()}, Python automatically turns it into
+\code{Ball.print(ball2)} in the background.
+\end{region}
+
+\begin{region}[pitch=13.27]{256.2}
+Now we try to create a third ball -- but forget to initialize it before we
+output it. Enter:\\
+\tcode{(1) ball3 = Ball()}\\
+\tcode{(2) ball3.print()}
+\end{region}
+
+\begin{region}[pitch=13.6]{323.0}
+You will see: this results in an \textbf{error}.\\
+Because \code{ball3.x} has not been set yet -- this time we did not call
+\code{init()}.
+\end{region}
+
+\begin{region}[pitch=13.9]{364.0}
+\textbf{Wouldn't it be a good idea} if \textbf{initialization} happened
+\textbf{automatically} as soon as you create a new ball?\\
+$\rightarrow$ Someone actually had this idea already -- and it is built
+right into \textbf{Python}!
+\end{region}
+
+\begin{region}[pitch=13.2]{418.6}
+Enter the following (or use \code{Arrow-Up} to bring back the old code for
+the class \code{Ball} and modify it):
+\end{region}
+
+\begin{region}[pitch=13.2]{458.4}
+\begin{codeblock}[basicstyle=\codexi{13.2}]
+class Ball:
+    def __init__(ich, x):
+        ich.x = x
+    def print(ich):
+        print(f"mein x ist {ich.x}")
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.35]{541.7}
+Then enter:\\
+\inp{1}\code{ball3 = Ball(321)}\\
+\inp{2}\code{ball3.print()}
+\end{region}
+
+\begin{region}[pitch=15.0]{595.4}
+\textbf{Now you see:}\\
+The initialization with \code{__init__} happens automatically as soon as you
+create a new object \code{Ball(321)}. So you no longer have to call init
+manually -- Python takes care of that \textbf{automatically}.
+\end{region}
+
+\begin{region}[pitch=14.3]{652.8}
+Usually, you do not use \code{ich} but \code{self} as the \textbf{first
+parameter} of the functions (also called \textbf{object methods}); it
+specifies the object whose attributes are \textbf{initialized},
+\textbf{manipulated}, or \textbf{read}.
+\end{region}
+
+\begin{region}[pitch=14.3]{708.8}
+However, this is only a \textbf{convention} -- in theory, you could choose
+any other name.\\
+What is \textbf{not negotiable}, though, is that the function for automatic
+initialization (also called \textbf{construction}) must be named
+\code{__init__}.
+\end{region}
+
+\nextpage
+%% ==================================================================== 13 ==
+\begin{region}{69.4}
+\heading{Step 7: The real class Ball}
+\end{region}
+
+\begin{region}[pitch=13.3]{96.9}
+The concept of a \textbf{class} from which you can construct \textbf{several
+instances} can now be implemented for our game as follows:
+\end{region}
+
+\begin{region}[pitch=12]{123.6}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 10 class@ ~Ball~:
+@ 11 @    @def@ ~__init__~(self, x, y, vx, vy):
+@ 12 @        self.x = x
+@ 13 @        self.y = y
+@ 14 @        self.vx = vx
+@ 15 @        self.vy = vy
+@ 16 @        self.c = (^255^, ^255^, ^0^)
+@ 17@
+@ 18 @    @def@ ~move~(self):
+@ 19 @        self.x += self.vx
+@ 20 @        self.y += self.vy
+@ 21 @        @if@ self.x < ^0^ @or@ self.x > width:
+@ 22 @            self.vx *= -^1^
+@ 23 @        @if@ self.y < ^0^ @or@ self.y > height:
+@ 24 @            self.vy *= -^1^
+@ 25@
+@ 26 @    @def@ ~draw~(self, surface):
+@ 27 @        pygame.draw.circle(surface, self.c, (self.x, self.y), ^5^)
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=14.3]{340.8}
+Use it to replace the lines in which the variables \code{ball_c},
+\code{ball_x}, \code{ball_y}, \code{ball_vx}, and \code{ball_vy} were
+previously initialized.
+\end{region}
+
+\begin{region}{382.1}
+\subheading{Brief explanation of the class:}
+\end{region}
+
+\begin{region}[pitch=14.2]{395.4}
+\begin{dashlist}
+\item With the constructor \code{__init__}, you can create a new
+  \textbf{Ball object} and specify its \textbf{initial position} and
+  \textbf{initial velocity}. Internally, the corresponding
+  \textbf{attributes} are attached to the object -- plus an
+  \textbf{attribute for the color} with a \textbf{default value}.
+\item With the method \code{move}, a Ball object can be \textbf{moved}. At
+  the edges, it is \textbf{reflected} as before.
+\item With the method \code{draw}, a Ball object can be drawn on a drawing
+  surface.
+\end{dashlist}
+\end{region}
+
+\begin{region}{508.7}
+\subheading{Task: Make use of it!}
+\end{region}
+
+\begin{region}[pitch=14.75]{522.0}
+\begin{dashlist}
+\item Every feature you program should also be \textbf{used}. So if we have
+  a \textbf{class} from which you can create \textbf{more than one
+  instance}, then you should create at least \textbf{two instances}! To do
+  this, insert the following line \textbf{before the while loop}:
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0]{565.1}
+\begin{codeblock}[style=py,basicstyle=\codexi{12}]
+@ 49 @balls = [Ball(^400^, ^300^, -^1^, ^2^), Ball(^200^, ^100^, ^4^, ^2^)]
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=14.2]{579.3}
+The \textbf{list} \code{balls} now contains two \textbf{Ball objects} with
+different \textbf{initial positions} and \textbf{initial velocities}.
+\end{region}
+
+\begin{region}[pitch=15.2]{606.9}
+\begin{dashlist}
+\item When the balls are \textbf{drawn}, you can \textbf{move them right
+  afterwards} as well. To apply this to \textbf{all Ball objects}, you can
+  iterate over the elements of \code{balls}:
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=13.2]{635.7}
+\begin{codeblock}[style=py,basicstyle=\codexi{13.2}]
+@66 @    @for@ ball @in@ balls:
+@67 @        ball.draw(screen)
+@68 @        ball.move()
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=13.9]{676.0}
+Use it to replace the line that previously \textbf{drew the ball}. Also
+remove the \textbf{old code} that previously moved the ball (i.e., code that
+still used \code{ball_x}, \code{ball_y}, \code{ball_vx}, \code{ball_vy}).
+\end{region}
+
+\begin{region}[pitch=13.6]{716.6}
+\begin{dashlist}
+\item If everything works:\\
+  \code{git commit -a -m "ball class"}\\
+  \code{git push}
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ==================================================================== 14 ==
+\begin{region}{69.4}
+\heading{Step 8 (Chill out)}
+\end{region}
+
+\begin{region}{98.0}
+Extend the program so that a new \textbf{ball} enters the playing field when
+the key \code{A} is pressed.
+\end{region}
+
+\begin{region}{125.4}
+This time you deliberately get \textbf{little help}.
+\end{region}
+
+\begin{region}[pitch=13.75]{151.9}
+Either you already have an idea or even know how to do it --\\
+or you use newfangled stuff like the \textbf{Internet}, which offers things
+like \textbf{Google} or \textbf{ChatGPT}.
+\end{region}
+
+\begin{region}{205.7}
+You just have to ask the right questions, for example:
+\end{region}
+
+\begin{region}[pitch=13.2]{231.5}
+\begin{dashlist}
+\item How do I check in PyGame whether the A key has been pressed?
+\item How do I append an object to a list?
+\item etc.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.25]{285.7}
+The \textbf{new ball} can always have the same \textbf{initial position} or
+\textbf{initial velocity} -- or you choose them \textbf{randomly}.\\
+And if you think of any other fun additions: \textbf{Go wild!}
+\end{region}
+
+\begin{region}{342.7}
+\subheading{When you are done -- into the repository with it:}
+\end{region}
+
+\begin{region}[pitch=13.2]{370.6}
+\code{git commit -a -m "fun with objects"}\\
+\code{git push}
+\end{region}
+
+\end{document}
