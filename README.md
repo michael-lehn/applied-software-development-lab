@@ -95,7 +95,7 @@ position, with the same space for notes.
 | 4 | [Fun and games with the serial interface](pdf/handout04.pdf) | Serial communication, push button and potentiometer, first steps in Python, `git` | [tex](handouts/handout04.tex) |
 | 5 | [The word class makes an appearance](pdf/handout05.pdf) | Reading the serial interface in Python, control structures, introduction to classes | [tex](handouts/handout05.tex) |
 | 6 | [Moving pictures](pdf/handout06.pdf) | Tuples, first steps with Pygame, objects and methods | [tex](handouts/handout06.tex) |
-| 7 | [At the end, we shoot 😃 and tidy up 😩](pdf/handout07.pdf) | Object-oriented programming, refactoring, incremental development | [tex](handouts/handout07.tex) |
+| 7 | [At the end, we shoot 😃 and clean up 😩](pdf/handout07.pdf) | Object-oriented programming, refactoring, incremental development | [tex](handouts/handout07.tex) |
 | 8 | [Things get vaporized](pdf/handout08.pdf) | Object-oriented programming, refactoring, incremental development | [tex](handouts/handout08.tex) |
 | 9 | [More control!](pdf/handout09.pdf) | Connecting the controller to the game, Python modules | [tex](handouts/handout09.tex) |
 | 10 | [Now with moving pictures!](pdf/handout10.pdf) | Refactoring, exceptions, serial data flow, bitmaps | [tex](handouts/handout10.tex) |
