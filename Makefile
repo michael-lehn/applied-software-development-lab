@@ -18,13 +18,16 @@ export TEXINPUTS := $(CURDIR)/tex//:$(CURDIR)/figures//:$(TEXINPUTS)
 
 .PHONY: all handouts supplementary clean distclean
 
+.SECONDEXPANSION:
+
 all: handouts supplementary
 
 handouts: $(HANDOUT_PDFS)
 
 supplementary: $(SUPPL_PDFS)
 
-pdf/%.pdf: handouts/%.tex tex/aslab.cls $(wildcard figures/shared/*) $(wildcard figures/%/*)
+pdf/%.pdf: handouts/%.tex tex/aslab.cls tex/aslab.lua $(wildcard figures/shared/*) \
+           $$(wildcard figures/$$*/*)
 	@mkdir -p $(BUILD) pdf
 	cd handouts && $(LATEXMK) $(LMKFLAGS) -outdir=../$(BUILD) $*.tex
 	cp $(BUILD)/$*.pdf $@
