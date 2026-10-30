@@ -1,0 +1,1097 @@
+% Applied Software Development Lab -- Lab Handout 9: More Control!
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 9".
+\documentclass{aslab}
+\sethandout{9}{More Control!}
+\graphicspath{{../figures/handout09/}{../figures/shared/}}
+
+% heading color of the "motivation" box on page 7
+\definecolor{motivmagenta}{HTML}{970E53}
+% code lines keep the region pitch even with tall or deep glyphs
+\makeatletter
+\lst@AddToHook{Init}{\lineskiplimit=-\maxdimen\relax}
+\makeatother
+% "•" lists with the text indented by 9bp
+\newlist{dotlist}{itemize}{1}
+\setlist[dotlist]{label={\textbullet},leftmargin=9bp,labelsep=*,align=left,
+  labelindent=0pt}
+% inline code with leading spaces (four spaces = 2.4em in the mono font)
+\newcommand*\indentcode[2]{\codearg{\hspace*{#1em}#2}}
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}[pitch=13]{124.0}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=13]{138.5}
+{\bfseries\color{aslabblue}
+\begin{dashlist}
+\item Connecting hardware (push button \& potentiometer) to a game via the
+  serial interface
+\item Understanding and reusing existing microcontroller code
+\item Establishing the connection between game and controller
+\item How to write a ``proper'' module
+\end{dashlist}
+}
+\end{region}
+
+\begin{region}{218.8}
+\heading{Looking back and today's goal}
+\end{region}
+
+\begin{region}[pitch=14.1]{246.4}
+So far, you have worked on the Breakout game, which was controlled with the
+keyboard. Today we extend it -- with a self-built \textbf{game controller on
+the breadboard}!
+\end{region}
+
+\begin{region}[pitch=14.05]{287.9}
+In \textbf{lab handouts 4 and 5} you programmed a microcontroller that
+\begin{dashlist}
+\item detects the \textbf{push-button state} (pressed / released)
+\item measures the \textbf{analog value} of the potentiometer (a
+  \textbf{10-bit value}, i.e., an integer in the range \textbf{from 0 to
+  1023})
+\end{dashlist}
+This information is sent via the serial interface -- for example:
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=14.25]{357.2}
+\begin{dashlist}
+\item \textbf{Push button pressed}: a line with \code{A}
+\item \textbf{Push button released}: a line with \code{a}
+\item \textbf{Voltage change at the potentiometer}: a line such as
+  \code{X 528}
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.65]{400.1}
+You can now build this data directly into the game:
+\begin{dashlist}
+\item The \textbf{push button} fires rockets
+\item The \textbf{potentiometer} controls the \textbf{position of the paddle}
+\end{dashlist}
+\end{region}
+
+\begin{region}{470.2}
+\heading{Preparation}
+\end{region}
+
+\begin{region}[pitch=13.7]{497.7}
+As usual, we work with two terminals:
+\begin{dashlist}
+\item \textbf{left}: editing source code
+\item \textbf{right}: compiling code, flashing, opening the serial monitor,
+  testing the game
+\end{dashlist}
+\end{region}
+
+\begin{region}{566.7}
+\subheading{Cloning the repository}
+\end{region}
+
+\begin{region}{593.2}
+In the left or right terminal:
+\end{region}
+
+\begin{region}{619.8}
+\code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}
+\end{region}
+
+\begin{region}{646.2}
+Then, in both terminals, change into the directory with the microcontroller
+code:
+\end{region}
+
+\begin{region}{672.8}
+\code{cd asp-ulm/controller}
+\end{region}
+
+\begin{region}[pitch=13]{698.9}
+In the next step, we take a closer look at the existing code once more:
+\begin{dashlist}
+\item How does the Makefile work?
+\item How is the code compiled and transferred to the microcontroller?
+\item How do you open the serial monitor to see the data being sent?
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Step 1: Microcontroller code and breadboard tinkering}
+\end{region}
+
+\begin{region}[pitch=13.1]{96.9}
+In the \textbf{left terminal}, open the file \code{controller.ino} containing
+the C++ code for the microcontroller. Go through the code once more at your
+own pace and try to understand exactly what happens. If anything is
+unclear, you can of course
+\begin{dashlist}
+\item take another look at lab handout 4,
+\item ask us,
+\item or help each other out.
+\end{dashlist}
+\end{region}
+
+\begin{region}{180.4}
+By the way, we like to ask silly questions ourselves now and then -- that is
+part of it \emoji{1F609}
+\end{region}
+
+\begin{region}[pitch=14.27]{210.3}
+Before you run the microcontroller code, you should rebuild \textbf{the
+familiar circuit} with \textbf{push button and potentiometer on the
+breadboard} and connect it correctly to the microcontroller. Here is a
+picture of the complete setup (the push button is connected to the digital
+input \textbf{pin~2}, the potentiometer to the analog input \textbf{A0}):
+\end{region}
+
+\placegraphic{96.0}{257.1}{403.3}{breadboard-setup.png}
+
+\begin{region}[pitch=14.0]{470.4}
+The current directory \code{controller} also contains a file named
+\code{Makefile}. If you like, you can briefly display its (somewhat cryptic)
+content in the \textbf{right terminal} with \code{cat Makefile}. For today,
+however, it is enough to know \textbf{what this Makefile is good for}. It
+contains rules for automatically invoking the right tools -- namely for:
+\end{region}
+
+\begin{region}[pitch=13.4]{525.3}
+\begin{dashlist}
+\item the \textbf{translation} of the C++ code (\code{controller.ino}) into
+  \textbf{machine code} for the microcontroller
+\item flashing the microcontroller with avrdude
+\item opening a serial monitor to see the output of the controller
+\end{dashlist}
+\end{region}
+
+\begin{region}{592.6}
+The program \code{make} does all of this for you -- depending on the target
+you invoke:
+\end{region}
+
+\begin{region}[x=60.7,right=0,pitch=22.73]{611.1}
+\newcommand\cmdcol[1]{\makebox[122.1bp][l]{#1}}%
+\cmdcol{\small\bfseries Command}{\small\bfseries Meaning}\par
+\cmdcol{\codearg{make}}{\small Translates the code into machine code (hex
+  file)}\par
+\cmdcol{\codearg{make upload}}{\small Flashes the microcontroller (compiles
+  beforehand if necessary)}\par
+\cmdcol{\codearg{make monitor}}{\small Opens the serial monitor, which shows
+  what the microcontroller sends}
+\end{region}
+
+\begin{region}[pitch=15.15]{704.3}
+\emoji{26A0} Important: For \code{make upload} or \code{make monitor} to
+work, \textbf{the microcontroller must be connected} and \textbf{the USB
+port must be made visible under WSL} -- as usual with: \code{usb_check}
+\end{region}
+
+\begin{region}[pitch=13.3]{762.0}
+\textbf{Task:} Once everything is set up and the microcontroller is
+connected, compile the program, flash the microcontroller, and use the
+serial monitor to check whether everything works as expected.
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\heading{Step 2: Reading the serial interface with Python
+  (\codearg{\mdseries serial-reader.py})}
+\end{region}
+
+\begin{region}[pitch=13.2]{97.0}
+By the way, we also wrote our own serial monitor in Python (see lab
+handout~4). Let's take another look at it now -- this time with fresh eyes!
+\end{region}
+
+\begin{region}[pitch=13.6]{137.5}
+\subheading{Preparation}
+In both terminals, change into the neighboring directory \code{python}:
+\end{region}
+
+\begin{region}{177.8}
+\code{cd ../python}
+\end{region}
+
+\begin{region}[pitch=14.3]{205.1}
+In the \textbf{left terminal}, open the file \code{serial-reader.py}.\\
+In the \textbf{right terminal}, you can start the monitor with:
+\end{region}
+
+\begin{region}{246.1}
+\code{python serial-reader.py}
+\end{region}
+
+\begin{region}{273.5}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.3]{301.0}
+When we worked on \textbf{lab handout 4}, we were not yet very familiar with
+object-oriented programming. That has changed now -- and that is exactly
+why a second look is worthwhile!
+\end{region}
+
+\begin{region}[pitch=13.2]{340.9}
+Go through the code \code{serial-reader.py} step by step -- and work on the
+following tasks:
+\end{region}
+
+\begin{region}{381.4}
+\begin{tasks}
+\item \textbf{Object-oriented interface to the serial connection}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{399.4}
+\code{ser = serial.Serial("/dev/ttyUSB0", 9600)}\\
+Here, an object of the class \code{Serial} from the module \code{serial} is
+created. This object (which we call \code{ser}) manages:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.15]{441.1}
+\begin{dotlist}
+\item the serial interface,
+\item an (internal) buffer for received bytes,
+\item and provides methods for working with it.
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{479.2}
+Important methods:
+\begin{dotlist}
+\item \code{in_waiting}: indicates \textbf{how many bytes are currently in
+  the buffer}
+\item \code{read(n)}: reads \textbf{n bytes from the buffer} (FIFO -- first
+  in, first out)
+\end{dotlist}
+In our code, we always read \textbf{a single byte} with \code{ser.read(1)}.
+\end{region}
+
+\begin{region}{549.3}
+\begin{tasks}[start=2]
+\item \textbf{Small code change}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.35]{567.0}
+In the code you will find this line:\\
+\code{ch = bytes.decode(ch)}\\
+Change it to:\\
+\code{ch = ch.decode()}\\
+Then start the program again and check whether everything still works as
+before. Discuss among yourselves, or ask us, why the new line is equivalent
+to the old one.
+\end{region}
+
+\begin{region}[x=74.7,right=0]{660.8}
+\itshape Note: \codearg{\upshape ser.read(1)} returns an object of type
+\codearg{\upshape bytes}.
+\end{region}
+
+\begin{region}[pitch=13.2]{687.3}
+When you are done, make a commit so that the small change to the code is not
+lost:
+\end{region}
+
+\begin{region}[pitch=13.2]{727.1}
+\code{git commit -a -m "call decode as a method"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{69.4}
+\heading{Step 3: Python basics (splitting strings -- converting numbers)}
+\end{region}
+
+\begin{region}[pitch=13.2]{97.0}
+Before we build the serial data into the game, we still need a few practical
+basics in Python.
+\end{region}
+
+\begin{region}[pitch=13.4]{137.5}
+\textbf{The problem:} The serial interface delivers strings such as
+\code{"X 512"}. It would be more practical if we could turn them directly
+into a list such as \code{["X", 512]} -- that is: split the text at the
+space and convert the second part into a number.
+\end{region}
+
+\begin{region}{191.6}
+\subheading{A short Python session}
+\end{region}
+
+\begin{region}{218.4}
+In the right terminal, start the Python shell with: \code{python}. Then off
+you go:
+\end{region}
+
+\begin{region}[pitch=13.4]{244.8}
+\begin{tasks}
+\item Enter:\\
+  \tcode{>>> }\code{s = "X 512"}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.4]{271.2}
+\begin{tasks}[start=2]
+\item Now split the string:\\
+  \tcode{>>> }\code{l = s.split()}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.42]{297.5}
+\begin{tasks}[start=3]
+\item Check the content:\\
+  \tcode{>>> }\code{s}\\
+  \tcode{>>> }\code{l}\\
+  $\rightarrow$ \code{l} should contain \code{["X", "512"]}.\\
+  Also try:\\
+  \tcode{>>> }\code{s = "X    512"}\\
+  \tcode{>>> }\code{l = s.split()}\\
+  Several spaces make no difference -- \code{split()} ignores superfluous
+  spaces.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.35]{418.6}
+\begin{tasks}[start=4]
+\item Access individual list elements:\\
+  \tcode{>>> }\code{l[0]}\\
+  \tcode{>>> }\code{l[1]}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.45]{458.2}
+\begin{tasks}[start=5]
+\item What happens here?\\
+  \tcode{>>> }\code{l[1] + 1}\\
+  This produces an error -- because \code{l[1]} is a string, not a number.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.3]{498.4}
+\begin{tasks}[start=6]
+\item Convert the string into a number and try again:\\
+  \tcode{>>> }\code{l[1] = int(l[1])}\\
+  \tcode{>>> }\code{l[1] + 1}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.28]{538.0}
+\begin{tasks}[start=7]
+\item We could also process strings with more than one number -- for
+  example:\\
+  \tcode{>>> }\code{s = "X 523 23"}\\
+  \tcode{>>> }\code{l = s.split()}\\
+  \tcode{>>> }\code{for i in range(1, len(l)):}\\
+  \tcode{... }\indentcode{2.4}{l[i] = int(l[i])}\\
+  $\rightarrow$ Then display \tcode{l}.\\
+  You will see: from the second element on, all entries have been converted
+  into integers.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{646.2}
+\subheading{Why this is useful}
+Normally, we only want to program what is necessary -- no generalizations in
+advance. But here we actually do need this generalization -- not because of
+cases with several numbers, but because of cases with no number at all:\\
+\tcode{>>> }\code{s = "A"}\\
+\tcode{>>> }\code{l = s.split()}\\
+\tcode{>>> }\code{for i in range(1, len(l)):}\\
+\tcode{... }\indentcode{2.4}{l[i] = int(l[i])}\\
+This works as well -- because the loop is not executed at all when \code{l}
+has only one element.
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\heading{Step 4: Our Python interface for the serial interface
+  (\codearg{\mdseries controller.py})}
+\end{region}
+
+\begin{region}[pitch=14.3]{96.9}
+In the \textbf{left terminal}, open the file \code{controller.py} (it was
+created in lab handout 5)\\
+and start it in the \textbf{right terminal} with: \code{python controller.py}
+\end{region}
+
+\begin{region}[pitch=14.3]{138.6}
+\subheading{Is this object-oriented?}
+Although a class Controller appears in the code, this is \textbf{not} an
+object-oriented interface -- which is quite common for hardware-oriented
+interfaces.
+\end{region}
+
+\begin{region}{185.8}
+Instead, there are \textbf{two free functions}, which can be used like this:
+\end{region}
+
+\begin{region}[pitch=13.2]{204.9}
+\tcode{connect("/dev/ttyUSB0")}\\
+\tcode{line = readline()}
+\end{region}
+
+\begin{region}[pitch=13.63]{236.4}
+\begin{dashlist}
+\item \code{connect(port)} must be called first to establish the connection.
+\item \code{readline()} returns either:
+  \begin{dashlist}
+  \item \code{None} (if no complete line is available yet), or
+  \item the \textbf{received string} (if a line was terminated with
+    \code{\n}).
+  \end{dashlist}
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.6]{305.7}
+\subheading{What does the class actually do?}
+The class \code{Controller} contains two static attributes:
+\begin{dashlist}
+\item \code{Controller.ser} -- the serial connection
+\item \code{Controller.buffer} -- the current input buffer
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.23]{360.5}
+They serve as \textbf{global variables}, but are \textbf{clearly
+encapsulated} by the class -- which shows that they belong together
+logically.\\
+The two functions connect() and readline() access these attributes -- so
+you could also move them directly into the class as static methods and then
+call them like this:
+\end{region}
+
+\begin{region}[pitch=13.2]{419.1}
+\tcode{Controller.connect(port)}\\
+\tcode{Controller.readline()}
+\end{region}
+
+\begin{region}{451.7}
+You \textbf{don't have to} do this -- but you \textbf{may}, if you feel like
+trying it out.
+\end{region}
+
+\begin{region}{479.1}
+\subheading{Task}
+\end{region}
+
+\begin{region}{497.9}
+\begin{tasks}
+\item Now write a function:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{516.9}
+\tcode{def readdata():}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{535.9}
+It should try to read a line with \code{readline()}. If that was successful
+(i.e., you did not get \code{None}):
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.6]{564.6}
+\begin{dotlist}
+\item split the line into a list as in \textbf{Step 3}, i.e., \textbf{convert
+  all numbers from the second element on} with \code{int()},
+\item and return the resulting list.
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{603.8}
+If no line is available (\code{readline()} returned \code{None}),
+\code{readdata()} should also return the value \code{None}.
+\end{region}
+
+\begin{region}[x=74.7,right=0]{643.7}
+To test it, in the main loop of the program simply replace
+\end{region}
+
+\begin{region}[x=74.7,right=0]{662.7}
+\tcode{line = readline()}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{681.4}
+with
+\end{region}
+
+\begin{region}[x=74.7,right=0]{700.3}
+\tcode{line = readdata()}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{719.1}
+Then restart the program and check whether everything works as expected --
+that is: instead of \code{"A"} or \code{"a"} you get \code{['A']} or
+\code{['a']}, respectively, and for \code{"X 523"} you get
+\code{['X', 523]}.
+\end{region}
+
+\begin{region}[pitch=13.5]{745.7}
+\begin{tasks}[start=2]
+\item If everything works:\\
+  \code{git commit -a -m "serial parser: readdata"}\\[-0.3bp]
+  \code{git push}
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\heading{Step 5: Turning \codearg{\mdseries controller.py} into a module}
+\end{region}
+
+\begin{region}[pitch=13.1]{87.2}
+So that we can later use our code from other Python programs (e.g., from
+within the game), we turn controller.py into a proper module.
+\end{region}
+
+\begin{region}[pitch=13.2]{117.9}
+To do this, we move the previous code from the main loop into a function
+main() and add the following at the end of the file:
+\end{region}
+
+\begin{region}[pitch=13.2]{150.0}
+\begin{codeblock}
+if __name__ == "__main__":
+    main()
+\end{codeblock}
+\end{region}
+
+\begin{region}{182.6}
+\subheading{What is the benefit?}
+\end{region}
+
+\begin{region}[pitch=14.4]{201.3}
+\begin{dashlist}
+\item If you \textbf{run} \code{controller.py} \textbf{directly} with
+  \code{python controller.py}, the \code{main()} function is called as
+  before and the program runs. So you can still \textbf{test} the module.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.3]{243.4}
+\begin{dashlist}
+\item If you \textbf{import} the module, e.g., with \code{import controller},
+  \textbf{nothing is executed automatically}. So you can build the
+  functionality into other places selectively and use it there. That is
+  exactly what we do in the next step!
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=18.8]{299.3}
+\subheading{Task}
+Quickly test whether everything still works as usual when you run python
+controller.py. If so:
+\end{region}
+
+\begin{region}[pitch=13.2]{337.0}
+\code{git commit -a -m "turned into module"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{380.6}
+\heading{Step 6: Firing rockets with the push button \emoji{1F680}}
+\end{region}
+
+\begin{region}[pitch=14.2]{397.8}
+Now we want to test how to build the module \code{controller.py} into our
+game -- using this example: \textbf{The push button fires a rocket.}
+\end{region}
+
+\begin{region}[pitch=14.3]{427.3}
+\begin{tasks}
+\item \textbf{Importing the module}\\
+  In the \textbf{left terminal}, open the file \code{breakout.py}. At the
+  top of the code, import the module with
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{459.6}
+\tcode{import controller}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{477.2}
+If you implemented \code{connect}, \code{readline}, and \code{readdata} as
+static methods within the class Controller, use:
+\code{from controller import Controller}; otherwise you would have to write
+\code{controller.Controller.connect} instead of \code{Controller.connect}.
+\end{region}
+
+\begin{region}[pitch=13.3]{518.4}
+\begin{tasks}[start=2]
+\item \textbf{Establishing the connection to the serial interface}\\
+  Insert the following line before the main loop:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{550.6}
+\tcode{controller.connect("/dev/ttyUSB0")}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{569.4}
+If you implemented connect as a static method within the class Controller,
+use:\\
+\code{Controller.connect("/dev/ttyUSB0")}
+\end{region}
+
+\begin{region}[pitch=13.3]{597.0}
+\begin{tasks}[start=3]
+\item \textbf{Processing serial data in the game loop}\\
+  Insert the following code in the main loop:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{628.1}
+\begin{codeblock}
+ser_data = controller.readdata()
+if ser_data:
+    if ser_data[0] == "A":
+       rockets.append(Rocket(Paddle.x + Paddle.w // 2, Paddle.y, -10))
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{685.3}
+Here, too: if you have \code{readdata()} as a static method in the class,
+use\\
+\code{ser_data = Controller.readdata()}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{717.6}
+The code checks whether a new line has been received from the serial
+interface. If its first component is \code{"A"} (push button pressed), a
+rocket is created and fired.
+\end{region}
+
+\begin{region}[pitch=13.3]{753.0}
+Test your game. If everything works:\\
+\code{git commit -a -m "button fires"}\\[-0.1bp]
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}{72.9}
+\heading{Step 7: Controlling the paddle with the potentiometer
+  \emoji{1F579}}
+\end{region}
+
+\begin{region}{96.2}
+For now, only one thing is missing: \textbf{controlling the paddle directly
+with the potentiometer.}
+\end{region}
+
+\begin{region}[pitch=13.3]{115.2}
+For this, we extend the class Paddle with a method \code{set()} that lets
+you set the \code{x} position directly.
+\end{region}
+
+\begin{region}[pitch=13.3]{150.3}
+\begin{tasks}
+\item \textbf{Extending the code in \codearg{\mdseries breakout.py}}\\
+  Change the code that queries the controller to:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.26]{182.5}
+\begin{codeblock}
+ser_data = controller.readdata()
+if ser_data:
+   if ser_data[0] == "A":
+      rockets.append(Rocket(Paddle.x + Paddle.w // 2, Paddle.y, -10))
+   elif ser_data[0] == "X":
+       Paddle.set(ser_data[1])
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.6]{268.5}
+\begin{tasks}[start=2]
+\item \textbf{Writing the method \codearg{\mdseries set()} in paddle.py}\\
+  Open the file \code{paddle.py} and add the method:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{301.1}
+\begin{codeblock}
+def set(x):
+    Paddle.x = x
+    if Paddle.x < 0:
+        Paddle.x = 0
+    if Paddle.x + Paddle.w > Game.width:
+        Paddle.x = Game.width - Paddle.w
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{385.8}
+This sets \code{Paddle.x} and limits it to the left and right if necessary.
+\end{region}
+
+\begin{region}[pitch=13.25]{400.0}
+\begin{tasks}[start=3]
+\item \textbf{Testing and fine-tuning}\\
+  Start the game and test whether you can move the paddle with the
+  potentiometer.\\
+  If it feels too sluggish, try in breakout.py:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=18.8]{445.4}
+\tcode{Paddle.set(ser_data[1] * 1.5)}\\
+or\\
+\tcode{Paddle.set(ser_data[1] * 2)}
+\end{region}
+
+\begin{region}{509.2}
+Once everything works (and you are happy with the paddle speed):
+\end{region}
+
+\begin{region}[pitch=13.2]{535.7}
+\code{git commit -a -m "paddle works too"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{594.8}
+{\fontsize{13bp}{15bp}\selectfont\bfseries\color{motivmagenta}Motivation for
+the next step: it's about cold hard cash \emoji{1F4B0}\par}
+\end{region}
+
+\begin{region}{624.9}
+Now, as a test, unplug the USB cable from the microcontroller and restart the
+game.
+\end{region}
+
+\begin{region}[pitch=15.8]{642.4}
+\emoji{1F4A5} The game crashes because the call
+\code{controller.connect("/dev/ttyUSB0")} fails.
+\end{region}
+
+\begin{region}[pitch=13.15]{658.2}
+Imagine: you have programmed a great game that is already fun without a
+controller -- but only with a controller does it become really cool. And
+that is exactly what people are willing to spend a few hard-earned euros on.
+\end{region}
+
+\begin{region}{715.2}
+\emoji{1F449} For this to work, your game must:
+\end{region}
+
+\begin{region}[pitch=14.2]{730.9}
+\begin{dashlist}
+\item \textbf{run smoothly even without a controller},
+\item[{\color{aslabblue}\fontsize{13.2bp}{12bp}\selectfont -}] and
+  ideally even allow \textbf{connecting the controller while the game is
+  running}.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\heading{Step 8: Catching exceptions}
+\end{region}
+
+\begin{region}[pitch=13.1]{90.5}
+We now make our code more robust by cleanly catching errors that occur while
+establishing the connection.
+\end{region}
+
+\begin{region}{125.4}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.3]{145.2}
+\begin{tasks}
+\item \textbf{Adapting} \code{connect()}\\
+  In controller.py, change the function connect as follows:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{177.4}
+\begin{codeblock}
+def connect(port):
+    try:
+        Controller.ser = serial.Serial(port, 9600)
+        Controller.buffer = ""
+        print(f"connected to {port}")
+    except:
+        print(f"could not connected to {port}")
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=15.5]{276.0}
+\subheading{What happens here?}
+Here you see the basic pattern:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{310.4}
+\begin{codeblock}
+try:
+    ...
+except:
+    ...
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{368.7}
+This means: the program tries to execute the code in the \code{try} block.
+If an error occurs, the program jumps to the \code{except} block. If no
+error occurs, the \code{except} block is simply skipped.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.28]{414.5}
+In our case, this specifically means:
+\begin{dotlist}
+\item If the serial interface can be opened, everything is fine --
+  \code{Controller.ser} contains a valid object.
+\item If it fails, there is just a message, and \code{Controller.ser} stays
+  \code{None} -- the program does not crash (at this point).
+\end{dotlist}
+\end{region}
+
+\begin{region}[pitch=13.8]{495.1}
+\begin{tasks}[start=2]
+\item \textbf{Testing and solving the next problem}\\
+  Start the game \textbf{without a connected microcontroller}. You will see:
+  it still crashes -- but only later, namely when \code{readline()} is
+  called. Why? Because this function assumes that \code{Controller.ser} is
+  always a valid object.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{558.8}
+This is easy to fix. We only need to safeguard \code{readline()}. At the
+beginning of the function \code{readline()}, check whether
+\code{Controller.ser} is a valid object:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{591.3}
+\begin{codeblock}
+def readline():
+    if Controller.ser is None:
+        return None
+    # rest as before
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.5]{650.2}
+\begin{tasks}[start=3]
+\item \textbf{Testing and solving the next problem}\\
+  Please start the game once more, again without connecting the
+  microcontroller. You will notice that it crashes again, but this time at a
+  different place, namely in the function \code{readdata()}.\\
+  This happens because we previously added a check to \code{readline()} that
+  tests whether \code{Controller.ser} is a valid object at all. If it is
+  not, \code{readline()} returns the value \code{None}. And that is exactly
+  the problem: in the function \code{readdata()}, \code{s.split()} is called
+  immediately without any further check. As long as \code{s} is a string,
+  this works fine, but if \code{s} has the value \code{None}, the program
+  crashes, because a \code{None} object has no \code{split()} method.
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}[x=74.7,right=0,pitch=13.3]{81.9}
+To prevent this, we need to adapt \code{readdata()} so that it first checks
+whether a value is actually present. The function could then look like
+this, for example:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{121.8}
+\begin{codeblock}
+def readdata():
+    s = readline()
+    if s is not None:
+        s = s.split()
+        for i in range(1, len(s)):
+            s[i] = int(s[i])
+        return s
+    return None
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{240.3}
+Now the game should also run without a connected microcontroller.
+\end{region}
+
+\begin{region}[pitch=13.4]{267.6}
+\begin{tasks}[start=4]
+\item \textbf{Test: connecting the microcontroller while the game is
+  running}\\
+  As an exception, the \textbf{left terminal} is now \textbf{not used for
+  editing}, but for running \code{usb_check} -- our familiar workaround that
+  lets WSL see the USB port. We want to test whether the game also works
+  when the microcontroller is connected. We distinguish two cases:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{335.0}
+  \textbf{(a)} The microcontroller is already connected before the game
+  starts, or\\
+  \textbf{(b)} it is connected while the game is already running.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{375.5}
+\textbf{First, test case (a):} Connect the microcontroller, run
+\code{usb_check} in the left terminal, and then start the game in the right
+terminal with \code{python breakout.py}. You should now be able to control
+the game with the breadboard.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{429.6}
+\textbf{Next, case (b):} Unplug the USB cable from the microcontroller,
+restart the game in the right terminal with \code{python breakout.py}, then
+reconnect the microcontroller and run \code{usb_check} in the left
+terminal.\\
+You will notice: \textbf{unfortunately, the breadboard no longer works
+now}. The reason is simple: our program tries only once, at the beginning,
+with
+\end{region}
+
+\begin{region}[x=74.7,right=0]{503.1}
+\tcode{controller.connect("/dev/ttyUSB0")}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{521.5}
+to open the serial interface. If this fails at startup, it is not tried
+again later.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.53]{561.1}
+A simple but practical solution is to extend the program so that the user
+can try to activate the game controller at any time during the game by
+pressing the \textbf{P} key (for ``peripheral''). This is not yet real hot
+plug'n'play, but it is a solution that works in everyday use.
+\end{region}
+
+\begin{region}[x=74.7,right=0]{628.9}
+\subheading{And this is exactly where you come into play:}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{655.4}
+Adapt your program so that this works. When everything works in the end,
+don't forget:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{695.2}
+\code{git commit -a -m "plug and play"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{69.4}
+\heading{Outlook: what awaits you in the next lab handout}
+\end{region}
+
+\begin{region}[pitch=13.1]{88.3}
+The trickiest part is done -- congratulations! From now on, it is only about
+expanding the game further and making it more and more exciting. Here is
+what awaits you next time:
+\end{region}
+
+\begin{region}[pitch=13.2]{119.5}
+\begin{dashlist}
+\item There will be bricks that are more robust and have to be hit several
+  times.
+\item Some bricks have surprising side effects: with some of them you get
+  an extra ball, with others additional spaceships suddenly appear or other
+  exciting things happen.
+\item And the spaceships? Unfortunately, they are no longer as harmless as
+  before -- they start dropping bombs. Luckily, there are also bricks that
+  give you a protective shield.
+\item And \dots\ well, let yourselves be surprised!
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.23]{218.7}
+\textbf{The nice thing:} You don't have to learn much that is new for this.
+Most of it will consist of reorganizing the existing code so that everything
+fits together cleanly. And that is completely normal in programming. At the
+beginning of a project, you simply cannot foresee every detail -- and that
+is exactly what makes it exciting.
+\end{region}
+
+\begin{region}{285.6}
+\heading{For those who want to experiment on their own}
+\end{region}
+
+\begin{region}[pitch=13.17]{304.5}
+If you feel like implementing your own features before the next lab
+handout, here are a few ideas on how to proceed. The important thing: always
+make changes that are as small as possible and that you can test right
+away. That way, you reach your goal step by step, without everything
+blowing up in your face at the end.
+\end{region}
+
+\begin{region}[pitch=13.3]{363.6}
+\subheading{Global management of balls and spaceships}
+Currently, the lists \code{balls} and \code{ships} are managed locally in
+\code{breakout.py}. This means that new balls or spaceships can only be
+brought into the game there. A good first exercise would be to move these
+lists into the class \code{Game} as static attributes. Then you can access
+them from other modules. This is a small change that can be implemented
+quickly and tested right away.
+\end{region}
+
+\begin{region}[pitch=13.45]{449.9}
+\subheading{Bricks with different effects}
+In \code{wall.py} there is the matrix \code{Wall.brick}. So far, each entry
+has only the value \code{0} (no brick) or \code{1} (normal brick). You could
+extend the initialization so that the value \code{2} also occurs there at
+random. In the function \code{collision} you can then check what kind of
+brick was hit: with \code{1} everything stays as before, with \code{2} you
+additionally bring a new ball into the game. Once that works, you will
+probably notice quickly: you cannot tell by looking at the bricks what is
+special about them. You can change that by adapting the \code{draw}
+function.
+\end{region}
+
+\begin{region}[pitch=13.55]{550.3}
+\subheading{Adding spaceships}
+Similarly, you can initialize bricks with the values \code{0}, \code{1},
+\code{2}, or \code{3}. A brick with the value \code{3} could, for example,
+bring a new spaceship into the game.
+\end{region}
+
+\begin{region}[pitch=13.45]{597.1}
+\subheading{More robust bricks}
+You can extend the range of values further, so that a brick with \code{4}
+does not disappear after the first collision but is reset to \code{1}. You
+then have to hit it twice to destroy it.
+\end{region}
+
+\begin{region}[pitch=13.3]{657.0}
+\subheading{Dropping bombs}
+Bombs can be implemented much like rockets. You could write a class Bomb
+that is structured analogously to the class Rocket. You could also keep a
+list of the bombs as a static attribute in the class \code{Game}, so that it
+is globally visible.
+\end{region}
+
+\begin{region}[pitch=13.1]{723.4}
+{\color{aslabblue}
+When you try this out: have fun, and remember to test small intermediate
+steps regularly! In programming, this is often the decisive trick.
+\par}
+\end{region}
+
+\begin{region}[pitch=13.35]{755.2}
+{\color{aslabblue}
+And don't forget to commit your progress to the Git repository. If you
+create new files, you have to register them once beforehand with
+\code{git add FILENAME} -- after that, they are part of your project just
+like the other files.
+\par}
+\end{region}
+
+\end{document}
