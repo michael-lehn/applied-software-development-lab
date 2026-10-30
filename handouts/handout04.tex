@@ -1,0 +1,1048 @@
+% Applied Software Development Lab -- Lab Handout 4: Fun and games with the serial interface
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 4".
+\documentclass{aslab}
+\sethandout{4}{Fun and games with the serial interface}
+\graphicspath{{../figures/handout04/}{../figures/shared/}}
+
+\makeatletter
+%% Lists used in this handout --------------------------------------------
+%% learning objectives: blue bold dashes, text at +12bp
+\newlist{bluedash}{itemize}{1}
+\setlist[bluedash]{label={\color{aslabblue}\bfseries\aslab@dash},
+  leftmargin=12bp,labelsep=*,labelindent=0pt,align=left}
+%% "A)" lists with the text at +18bp
+\newlist{alphatasks}{enumerate}{1}
+\setlist[alphatasks]{label={\Alph*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+%% plain "1." lists (regular weight)
+\newlist{numlist}{enumerate}{1}
+\setlist[numlist]{label={\arabic*.},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+
+%% Program listings with syntax colors -----------------------------------
+%% Inside asmlisting, every space is a fixed 0.6em and every line break
+%% ends a line, so the columns of the original listings are preserved
+%% (an empty listing line is written as \mbox{}). The optional argument is the font size in bp (default 11); the line
+%% pitch is the one of the surrounding region.
+\newcommand*\aN[1]{\textcolor{codeorange}{#1}}% line numbers, keywords
+\newcommand*\aI[1]{\textcolor{codegreen}{#1}}% types
+\newcommand*\aK[1]{\textcolor{codered}{#1}}% literals
+\newcommand*\aR[1]{\textcolor{codecyan}{#1}}% functions, objects
+\newcommand*\aC[1]{\textcolor{codepurple}{#1}}% comments
+\newcommand*\aM[1]{\textcolor{codemagenta}{#1}}% Python import
+\newcommand*\asm@space{\leavevmode\hbox to 0.6em{}}
+{\catcode`\ =\active\catcode`\^^M=\active%
+\gdef\asm@setup{\catcode`\ =\active\def {\asm@space}%
+\catcode`\^^M=\active\def^^M{\par}}}%
+\newenvironment{asmlisting}[1][11]{\par
+  \edef\asm@bs{\the\baselineskip}\fontsize{#1bp}{\asm@bs}\selectfont
+  \ttfamily\asm@setup}{\par}
+
+%% Hyperlink in the heading blue, as in this handout of the original
+\newcommand*\bluelink[2]{\href{#1}{\textcolor{aslabblue}{#2}}}
+
+%% Keep the baseline pitch fixed even next to tall inline code boxes.
+%% Regions marked `free' below follow a line at a distance of less than
+%% 12.3bp, so only the gray inline-code backgrounds touch (as in the
+%% original); their text does not overlap.
+\lineskiplimit=-\maxdimen
+\makeatother
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{124.0}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=12.1]{138.0}
+\begin{bluedash}
+\item Understanding serial communication between the microcontroller and
+  the computer.
+\item Applying the basics of the Python programming language.
+\item A little bit of \code{git}
+\end{bluedash}
+\end{region}
+
+\begin{region}{188.8}
+\heading{Step 1: Forking the repository}
+\end{region}
+
+\begin{region}[pitch=13.25]{217.4}
+\textbf{Goal:} From now on, we will develop a software project step by step.
+We will proceed one step at a time -- and things will surely go wrong now
+and then. But that is exactly what we have git for -- a tool for version
+control.
+\end{region}
+
+\begin{region}{270.2}
+\begin{tasks}
+\item Open the following URL in your web browser:
+  \bluelink{http://gitlab.uni-ulm.de/mlehn/asp-ulm}{http://gitlab.uni-ulm.de/mlehn/asp-ulm}
+\end{tasks}
+\end{region}
+
+\begin{region}{283.4}
+\begin{tasks}[start=2]
+\item Log in with your kiz account.
+\end{tasks}
+\end{region}
+
+\begin{region}{297.5}
+\begin{tasks}[start=3]
+\item Click \textbf{Fork} at the top right.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=14.3]{311.7}
+\begin{tasks}[start=4]
+\item Under \textbf{Select a namespace}, choose your kiz username. Then click
+  \textbf{Fork project} at the bottom.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=14.25]{340.3}
+\begin{tasks}[start=5]
+\item You are now on the project page of your own fork. Click \textbf{Code}
+  there and copy the link under \textbf{Clone with HTTPS}.\\
+  The link has the form: {\color{aslabblue}https://gitlab.uni-ulm.de/\textbf{USERNAME}/asp-ulm}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{382.1}
+\begin{tasks}[start=6]
+\item As usual, we work with two terminals side by side -- the left one for
+  editing, the right one for running commands.
+\end{tasks}
+\end{region}
+
+\begin{region}{421.4}
+\subheading{Left terminal (editing)}
+\end{region}
+
+\begin{region}[pitch=13.35]{435.7}
+\begin{alphatasks}
+\item \textbf{Clone your Git repository}\\
+  Clone your fork with:\\
+  \code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}\\
+  Then change into the directory with\\
+  \code{cd asp-ulm}
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=13.6]{503.0}
+\begin{alphatasks}[start=2]
+\item \textbf{Change a file as a test}\\
+  Open the file \code{README.md} and write in a new line:
+  \code{Jetzt geht’s los!}
+\end{alphatasks}
+\end{region}
+
+\begin{region}{542.8}
+\subheading{Right terminal (running commands)}
+\end{region}
+
+\begin{region}[pitch=12.65]{555.1}
+\begin{alphatasks}
+\item Also change into the project directory with \code{cd asp-ulm}\\
+  Now try to commit the change with \code{git commit -a}\\
+  At first, an error message appears, something like:
+  \textbf{"Please tell me who you are…"}
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.1]{604.5}
+\begin{alphatasks}[start=2]
+\item Then run the following two commands (with your own name and email
+  address):\\
+  \code{git config user.email "your.name@uni-ulm.de"}\\
+  \code{git config user.name "Your Name"}
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.2]{640.5}
+\begin{alphatasks}[start=3]
+\item Now run the commit again:\\
+  \code{git commit -a}\\
+  nano opens. Enter a short message, e.g.: \code{My first commit}\\
+  Exit nano with Control + X and confirm with y.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.25]{689.1}
+\begin{alphatasks}[start=4]
+\item Transfer your commit to the server:\\
+  \code{git push}\\
+  You will be asked for your kiz username and password.\\
+  Note: \textbf{the password is not displayed while you type}, not even as
+  asterisks -- that is normal. Just type it blind and press Enter.
+\end{alphatasks}
+\end{region}
+
+\begin{region}{750.1}
+\begin{alphatasks}[start=5]
+\item Switch back to the browser, reload the page, and check whether your
+  change has been applied.
+\end{alphatasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Step 2: Programming the microcontroller with the Arduino framework}
+\end{region}
+
+\begin{region}{98.0}
+\textbf{Preparation:} In both terminals, change into the subdirectory
+\code{controller}.
+\end{region}
+
+\begin{region}[pitch=13]{124.0}
+\textbf{Left terminal:} In the left terminal, open the file
+\code{controller.ino} with \code{nano}. It contains the following program:
+\end{region}
+
+\begin{region}[pitch=10]{160.7}
+\begin{asmlisting}[9]
+  \aN{1} \aI{void} \aR{setup}()
+  \aN{2} \{
+  \aN{3}     \aR{Serial}.\aR{begin}(\aK{9600});
+  \aN{4}     \aR{Serial}.\aR{println}(\aK{"Hallo! Gleich kommen viele A's"});
+  \aN{5} \}
+  \aN{6}
+  \aN{7} \aI{void} \aR{loop}()
+  \aN{8} \{
+  \aN{9}     \aR{Serial}.\aR{print}(\aK{"A"});
+ \aN{10}     \aR{delay}(\aK{1000});
+ \aN{11} \}
+\end{asmlisting}
+\end{region}
+
+\begin{region}{285.0}
+\subheading{Right terminal}
+\end{region}
+
+\begin{region}[pitch=12.15]{298.0}
+\begin{numlist}
+\item \textbf{Connect the microcontroller.}\\
+  Attention: under WSL, you have to run the command \code{usb_check} every
+  time you connect a microcontroller so that the USB port becomes visible in
+  WSL.
+\end{numlist}
+\end{region}
+
+\begin{region}{335.3}
+\begin{numlist}[start=2]
+\item \textbf{Compile and upload the program:} \code{make upload}
+\end{numlist}
+\end{region}
+
+\begin{region}[pitch=12.33]{348.3}
+\begin{numlist}[start=3]
+\item \textbf{Start the serial monitor:} \code{make monitor}\\
+  First, a line should appear with: \code{Hallo! Gleich kommen viele A’s}
+  and then -- as promised -- lots of \code{A}s. :-)\\
+  You can exit the serial monitor with \code{Control-X}.
+\end{numlist}
+\end{region}
+
+\begin{region}{410.2}
+\subheading{Brief explanation of what happens}
+\end{region}
+
+\begin{region}[pitch=12.3]{422.6}
+\code{controller.ino} actually contains only a small excerpt of the complete
+C program that is compiled in the end. The functions \code{setup()} and
+\code{loop()} are -- as shown here -- embedded internally in a
+\code{main()} function:
+\end{region}
+
+\begin{region}[pitch=10]{469.9}
+\begin{asmlisting}[9]
+\aC{// Simplified representation – in reality, there are many more includes}
+\aC{// and initializations here}
+\mbox{}
+\aI{int} main()
+\{
+    \aC{// setup() is called exactly once}
+    setup();
+\mbox{}
+    \aC{// After that, loop() is called again and again}
+    \aN{while} (\aK{1}) \{
+        \aC{// With Arduino, an internal function checks, e.g., whether serial}
+        \aC{// data is available:}
+        \aN{if} (Serial.available()) \{ \aC{/* ... */}\}
+\mbox{}
+        loop();
+    \}
+\}
+\end{asmlisting}
+\end{region}
+
+\begin{region}[pitch=12.2]{653.5}
+So the function \code{setup()} is called exactly once -- in our example, to
+initialize the serial interface and to output a line of text.\\
+The function \code{loop()}, on the other hand, runs in an endless loop: in
+each pass, the character \code{A} is output, followed by a wait of 1000
+milliseconds (i.e., one second).
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\heading{What you should remember for today:}
+\end{region}
+
+\begin{region}[pitch=12.6]{81.2}
+\begin{dashlist}
+\item With \code{Serial.begin(9600)}, you initialize the serial interface --
+  here with a baud rate of 9600.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.6]{105.5}
+\begin{dashlist}
+\item With \code{Serial.print("foo")}, the string \code{"foo"} is output
+  without an additional line break.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.9]{129.8}
+\begin{dashlist}
+\item With \code{Serial.println("foo")}, the string \code{"foo"} is output
+  followed by a line break (more precisely: \code{\r\n}).
+\end{dashlist}
+\end{region}
+
+\begin{region}{167.7}
+\heading{Open questions: How exactly does the serial interface work?}
+\end{region}
+
+\begin{region}[pitch=12.38]{180.0}
+When \code{Serial.print("A");} is executed, you can observe on pin~1 (TX)
+with the oscilloscope how the character \code{'A'} is transmitted -- as a
+sequence of voltage changes that correspond to the bit pattern of
+\code{0x41}.\\
+The letter \code{'A'} has a so-called ASCII value and is represented as an
+8-bit number: \code{01000001}. These bits are sent one after the other --
+similar to Morse code -- by setting the TX pin \textbf{HIGH} or
+\textbf{LOW}. At a baud rate of \textbf{9600}, each bit takes about
+104\,µs.
+\end{region}
+
+\begin{region}[pitch=13]{267.2}
+\textbf{But:} The data is not only output via \textbf{pin~1 (TX)}, but is
+\textbf{also transmitted over the USB cable} -- with the help of a
+\textbf{serial-to-USB converter} (often integrated into the microcontroller
+or present on the board). That is why you can also see the transmitted
+character in the \textbf{serial monitor on the computer}, without any
+oscilloscope.
+\end{region}
+
+\begin{region}{331.2}
+\heading{Finally}
+\end{region}
+
+\begin{region}[pitch=12.07]{343.3}
+Change line~4 so that only \tcode{Hallo!} followed by a line break is
+output. Commit the changes and upload them to the repository with the
+following command:\\
+\code{git commit -a -m "Schritt 2"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{404.5}
+\heading{Step 3: Playing around with the Arduino framework}
+\end{region}
+
+\begin{region}{419.4}
+Modify the file \code{controller.ino} as follows:
+\end{region}
+
+\begin{region}[pitch=10]{430.1}
+\begin{asmlisting}[9]
+  \aN{1} \aI{void} \aR{setup}()
+  \aN{2} \{
+  \aN{3}     \aR{Serial}.\aR{begin}(\aK{9600});
+  \aN{4} \}
+  \aN{5}
+  \aN{6} \aI{int} valueA0;
+  \aN{7}
+  \aN{8} \aI{void} \aR{loop}()
+  \aN{9} \{
+ \aN{10}     \aR{Serial}.\aR{print}(\aK{"X "});
+ \aN{11}     \aR{Serial}.\aR{println}(valueA0);
+ \aN{12}     \aR{delay}(\aK{100});
+ \aN{13}     valueA0 += \aK{1};
+ \aN{14} \}
+\end{asmlisting}
+\end{region}
+
+\begin{region}{584.4}
+\subheading{Explanation of the changes}
+\end{region}
+
+\begin{region}[free]{596.1}
+\begin{dashlist}
+\item In the function \code{setup()}, only the serial interface is
+  initialized now.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.45]{608.4}
+\begin{dashlist}
+\item In line~6, a global variable \code{valueA0} of type \code{int} is
+  declared. Since it is defined outside a function, it is a global
+  variable. In C/C++, global variables without an initial value
+  automatically get the value \code{0}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.7,free]{645.0}
+\begin{dashlist}
+\item In line~10, the letter \code{'X'} followed by a space is output. This
+  space will be important later.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.9]{669.3}
+\begin{dashlist}
+\item In line~11, the current value of the variable \code{valueA0} is
+  output, followed by a line break via \code{println}. This line break will
+  also play a role later.
+\end{dashlist}
+\end{region}
+
+\begin{region}[free]{693.9}
+\begin{dashlist}
+\item In line~13, \code{valueA0} is incremented by one in each pass of the
+  \code{loop()} function.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.1]{719.5}
+\textbf{Task:} Compile the modified program, flash the microcontroller, and
+compare the output in the serial monitor with the expected output.
+\end{region}
+
+\begin{region}{744.5}
+\textbf{Finally:} \code{git commit -a -m "Schritt 3"} and \code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{69.4}
+\heading{Step 4: Tinkering and even more playing around}
+\end{region}
+
+\begin{region}[pitch=13]{96.7}
+Grab a \textbf{breadboard, jumper wires, wires, a 10\,kΩ resistor, a push
+button, and a potentiometer}, and build the following circuit:
+\end{region}
+
+\placegraphic{56.7}{112.4}{390.2}{breadboard-circuit.png}
+
+\begin{region}{318.0}
+\subheading{Important:}
+\end{region}
+
+\begin{region}{329.5}
+\begin{dashlist}
+\item The middle leg of the potentiometer is connected to pin A0.
+\item One leg of the push button is connected to pin~2 (the other one via
+  the resistor to GND).
+\end{dashlist}
+\end{region}
+
+\begin{region}{366.3}
+Edit the file \code{controller.ino} as follows:
+\end{region}
+
+\begin{region}[pitch=10]{389.0}
+\begin{asmlisting}[9]
+  \aN{1} \aI{void} \aR{setup}()
+  \aN{2} \{
+  \aN{3}     \aR{Serial}.\aR{begin}(\aK{9600});
+  \aN{4}     \aR{pinMode}(\aK{2}, \aK{INPUT});
+  \aN{5} \}
+  \aN{6}
+  \aN{7} \aI{int} valueA0;
+  \aN{8}
+  \aN{9} \aI{void} \aR{loop}()
+ \aN{10} \{
+ \aN{11}     \aN{if} (\aR{digitalRead}(\aK{2})) \{
+ \aN{12}         \aR{Serial}.\aR{println}(\aK{"A"});
+ \aN{13}     \}
+ \aN{14}
+ \aN{15}     \aI{int} analogValue = \aR{analogRead}(A0);
+ \aN{16}     \aN{if} (valueA0 != analogValue) \{
+ \aN{17}         valueA0 = analogValue;
+ \aN{18}         \aR{Serial}.\aR{print}(\aK{"X "});
+ \aN{19}         \aR{Serial}.\aR{println}(valueA0);
+ \aN{20}     \}
+ \aN{21}     \aR{delay}(\aK{100});
+ \aN{22} \}
+\end{asmlisting}
+\end{region}
+
+\begin{region}{621.3}
+\subheading{Task}
+\end{region}
+
+\begin{region}{633.3}
+Before the program is explained in detail, first observe for yourselves what
+it does:
+\end{region}
+
+\begin{region}{644.8}
+\begin{dashlist}
+\item Compile the program, flash the microcontroller, and start the serial
+  monitor.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.5]{656.8}
+\begin{dashlist}
+\item Observe what happens when you turn the potentiometer -- especially at
+  its extreme positions.
+\end{dashlist}
+\end{region}
+
+\begin{region}{680.8}
+\begin{dashlist}
+\item Observe what happens when you press the push button.
+\end{dashlist}
+\end{region}
+
+\begin{region}{706.3}
+\textbf{Finally:} \code{git commit -a -m "Schritt 4"} and \code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\subheading{Explanation of the changes}
+\end{region}
+
+\begin{region}{81.5}
+\begin{dashlist}
+\item In \textbf{line~4}, \code{pinMode(2, INPUT)} configures digital pin~2
+  as an input.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.72]{94.5}
+\begin{dashlist}
+\item In \textbf{lines 11 to 13}, you see an \code{if} statement. The
+  condition checks the value returned by \code{digitalRead(2)}. This function
+  returns \code{1} (corresponding to \textbf{HIGH} or \code{true}) if a
+  voltage of around 5\,V is present at pin~2, and \code{0} (corresponding to
+  \textbf{LOW} or \code{false}) if there is almost no voltage.\\
+  If the return value is 1, the character \code{'A'} is sent via the serial
+  interface in line~12 -- including a line break via
+  \code{Serial.println("A")}
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.53,free]{170.2}
+\begin{dashlist}
+\item In \textbf{line~15}, a local variable \code{analogValue} of type
+  \code{int} is declared and initialized with the return value of
+  \code{analogRead(A0)}. Pin~A0 is an analog input. A voltage between 0\,V
+  and 5\,V is converted by the microcontroller into a digital value between
+  \code{0} and \code{1023} (i.e., 10-bit resolution).
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.65]{219.8}
+\begin{dashlist}
+\item The \code{if}\textbf{ statement in lines 16 to 20} checks whether the
+  new analog value \code{analogValue} differs from the previously stored
+  value \code{valueA0}. Only if the value has changed,
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0]{257.1}
+\begin{dashlist}
+\item is the new value stored in \code{valueA0} in \textbf{line~17},
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0]{270.1}
+\begin{dashlist}
+\item is an output generated via the serial interface in
+  \textbf{lines 18--19} (in the format \code{X <value>}).
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0]{283.1}
+If the value remains unchanged, no output is generated. This avoids
+unnecessary repetition.
+\end{region}
+
+\begin{region}{320.1}
+\heading{What you should remember for today:}
+\end{region}
+
+\begin{region}[pitch=12.3,free]{331.8}
+\begin{dashlist}
+\item With \code{pinMode(2, INPUT)}, a digital pin is configured as an
+  input.
+\item \code{digitalRead(2)} returns \code{1} if a voltage is present at the
+  pin, and \code{0} if not.
+\item With \code{analogRead(A0)}, a voltage from 0\,V to 5\,V is converted
+  into a value from \code{0} to \code{1023}.
+\end{dashlist}
+\end{region}
+
+\begin{region}{406.0}
+\heading{Step 5: Fine-tuning}
+\end{region}
+
+\begin{region}{430.0}
+The behavior of the microcontroller is to be refined:
+\end{region}
+
+\begin{region}[pitch=13.03]{442.0}
+\begin{dashlist}
+\item \textbf{When the push button is pressed,} an \code{'A'} is to be sent
+  via the serial interface.
+\item \textbf{As long as the push button remains pressed,} no further
+  character may be sent.
+\item \textbf{When the push button is released,} an \code{'a'} is to be
+  sent.
+\item \textbf{As long as the push button is not pressed,} no further
+  \code{'a'} may be sent.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.1]{494.3}
+In short: the characters \code{'A'} and \code{'a'} should only be sent on a
+change of state -- not while the button is being held.
+\end{region}
+
+\begin{region}{531.3}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13]{555.6}
+\begin{numlist}
+\item Create a global variable \code{pressedA} of type \code{bool}. For it
+  to be global, it must be declared \textbf{outside a function} -- e.g.,
+  after line~7:
+\end{numlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{580.7}
+\begin{asmlisting}[9]
+\aI{bool} pressedA;
+\end{asmlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.3]{592.9}
+Since global variables in C/C++ are automatically initialized with the
+value \code{0}, \code{pressedA} is initially \code{false}.
+\end{region}
+
+\begin{region}[free]{617.5}
+\begin{numlist}[start=2]
+\item Change the \code{if} statement in \code{loop()} to
+\end{numlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=10]{640.3}
+\begin{asmlisting}[9]
+\aN{if} (!pressedA \&\& \aR{digitalRead}(\aK{2})) \{
+    \aR{Serial}.\aR{println}(\aK{"A"});
+    pressedA = \aK{true};
+\}
+\end{asmlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.3]{681.9}
+The \code{!} negates the logical value of \code{pressedA}, \code{&&} is the
+logical AND. With this condition, an \code{'A'} is only output if the push
+button was not pressed before.\\
+At the same time, we remember with \code{pressedA = true} that the push
+button is now pressed.
+\end{region}
+
+\begin{region}[pitch=12.1]{718.5}
+\begin{numlist}[start=3]
+\item Compile the program, flash the microcontroller, and observe the output
+  in the serial monitor. With this change, part of the desired behavior is
+  already achieved. However, the output of \code{'a'} on release is still
+  missing. With a second \code{if} statement and a bit of puzzling, you
+  should be able to reach the goal completely.
+\end{numlist}
+\end{region}
+
+\begin{region}{767.8}
+\begin{numlist}[start=4]
+\item \textbf{If everything works:} \code{git commit -a -m "Schritt 5"} and
+  \code{git push}
+\end{numlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\heading{Step 6: From the hello world program to the serial interface}
+\end{region}
+
+\begin{region}[pitch=12.24]{94.8}
+In both terminals, change into the directory \code{python}. This directory
+is located next to the current directory \code{controller} -- you get there
+with:\\
+\code{cd ..}\\
+\code{cd python}\\
+or in one go:\\
+\code{cd ../python}
+\end{region}
+
+\begin{region}{180.3}
+There you will find the file \code{serial-reader.py} with the following
+content:
+\end{region}
+
+\begin{region}{203.0}
+\begin{asmlisting}[9]
+\aR{print}(\aK{"Hallo Welt"})
+\end{asmlisting}
+\end{region}
+
+\begin{region}{226.3}
+This is still a classic hello world program. Run it with:
+\end{region}
+
+\begin{region}{250.6}
+\code{python serial-reader.py}
+\end{region}
+
+\begin{region}{274.9}
+The output should -- not very surprisingly -- simply be: \code{Hallo Welt}
+(with a line break).
+\end{region}
+
+\begin{region}{299.0}
+Now we dare to take a giant step forward: we modify the Python program so
+that it reads the serial interface!
+\end{region}
+
+\begin{region}{335.0}
+Along the way, we also learn (learning by doing) a few basic language
+features of Python.
+\end{region}
+
+\begin{region}{371.2}
+Modify the program \code{serial-reader.py} as follows:
+\end{region}
+
+\begin{region}[pitch=10]{394.0}
+\begin{asmlisting}[9]
+  \aN{1} \aM{import} serial
+  \aN{2} \aM{import} time
+  \aN{3}
+  \aN{4} ser = serial.Serial(\aK{"/dev/ttyUSB0"}, \aK{9600})
+  \aN{5}
+  \aN{6} \aR{print}(\aK{"Warte auf serielle Eingaben..."})
+  \aN{7}
+  \aN{8 while} \aR{True}:
+  \aN{9}     \aN{while} ser.in\_waiting > \aK{0}:
+ \aN{10}         ch = ser.read(\aK{1})
+ \aN{11}         \aR{print}(ch)
+ \aN{12}     time.sleep(\aK{0.1})
+\end{asmlisting}
+\end{region}
+
+\begin{region}{528.2}
+\subheading{Indentation is not negotiable}
+\end{region}
+
+\begin{region}{553.2}
+When it comes to wrong indentation, Python is \textbf{just as tolerant as I
+am} -- that is, \textbf{not at all}.
+\end{region}
+
+\begin{region}[pitch=12.53]{578.2}
+Unlike many other programming languages, Python has \textbf{no curly
+braces} to delimit loop or function blocks. Instead, the Python interpreter
+-- just like the programmer -- recognizes \textbf{solely from the
+indentation} which statements belong to which block.\\
+In our example:
+\end{region}
+
+\begin{region}{640.3}
+\begin{dashlist}
+\item The outer \code{while True:} loop starts in \textbf{line 8} and
+  comprises \textbf{lines 9 to 12}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.9]{653.3}
+\begin{dashlist}
+\item The inner loop \code{while ser.in_waiting > 0:} starts in
+  \textbf{line 9} and comprises only \textbf{lines 10 and 11}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13]{678.9}
+\begin{dashlist}
+\item \code{time.sleep(0.1)} no longer belongs to the inner loop -- you can
+  tell this solely from the fact that it is indented at the same level as the
+  inner \code{while}.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}{69.4}
+\subheading{Task}
+\end{region}
+
+\begin{region}{93.8}
+Run the program with \code{serial-reader.py}
+\end{region}
+
+\begin{region}{117.8}
+You should see output that looks roughly like this (if necessary, turn the
+potentiometer or press the push button):
+\end{region}
+
+\begin{region}{154.1}
+\code{b'X'}\\
+\code{b' '}\\
+\code{b'4'}\\
+\code{b'0'}\\
+\code{b'4'}\\
+\code{b'\r'}\\
+\code{b'\n'}
+\end{region}
+
+\begin{region}[pitch=13]{250.4}
+Exit the program with \code{Control-C}.\\
+Update your repository with \code{git commit -a -m "Schritt 6"} and
+\code{git push}
+\end{region}
+
+\begin{region}{288.4}
+\subheading{Explanation of the output}
+\end{region}
+
+\begin{region}{311.9}
+\begin{dashlist}
+\item The program outputs one received byte per line.
+\item The data comes directly from the serial interface of the
+  microcontroller.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.8]{335.9}
+\begin{dashlist}
+\item In Python, such bytes are represented as so-called byte objects --
+  you can recognize them by the prefix \code{b'...'}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.5]{360.2}
+\begin{dashlist}
+\item Unlike normal character strings (strings), a byte object here contains
+  exactly one byte, for example:
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=12.3]{384.4}
+\begin{dashlist}
+\item \code{b'X'} stands for the byte with the ASCII value \code{0x58}, i.e.,
+  the letter \code{X}
+\item \code{b' '} is the space character (\code{0x20})
+\item \code{b'\r'} is the control character carriage return (\code{0x0D})
+\item \code{b'\n'} is the line feed (\code{0x0A})
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.6,right=0,pitch=12.3]{434.2}
+These last two characters are produced when \code{Serial.println(...)} is
+used in the Arduino program -- because \code{println} automatically sends
+\code{\r\n} at the end.
+\end{region}
+
+\begin{region}{471.5}
+\subheading{Technical background}
+\end{region}
+
+\begin{region}[pitch=12.1]{495.8}
+The variable \code{ser}, which is created by \code{serial.Serial(...)},
+represents a special data structure that manages access to the serial
+interface.
+\end{region}
+
+\begin{region}[pitch=12.1]{520.8}
+An internal \textbf{buffer} is also created, in which received bytes are
+stored temporarily.
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=12.5]{544.4}
+\begin{dashlist}
+\item Whenever a byte is received via the serial interface, it first ends
+  up in this buffer.
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=12.6]{568.6}
+\begin{dashlist}
+\item The variable \code{ser.in_waiting} always contains the number of bytes
+  currently stored in the buffer.
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0]{593.2}
+\begin{dashlist}
+\item With \code{ser.read(1)}, you can read \textbf{the oldest byte} from the
+  buffer.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=12.1]{607.2}
+This buffer works according to the principle of a \textbf{FIFO data
+structure} \textit{(First In, First Out)}:\\
+The byte received first is also the first one to be read.
+\end{region}
+
+\begin{region}{644.2}
+\subheading{What you should remember for today:}
+\end{region}
+
+\begin{region}[x=68.7,right=0]{668.9}
+\begin{dashlist}
+\item With \code{import serial}, the module pyserial is included -- it must
+  be installed.
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=12.45,free]{681.2}
+\begin{dashlist}
+\item \code{ser = serial.Serial(...)} opens the serial interface (here:
+  \code{/dev/ttyUSB0}) with the specified baud rate.\\
+  All further communication with the interface takes place via the
+  variable \code{ser}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=12.33,free]{717.8}
+\begin{dashlist}
+\item \code{ser.read(1)} reads one byte from the interface and returns it as
+  a byte object.
+\item The condition \code{ser.in_waiting > 0} checks whether data has
+  already been received.
+\item The prefix \code{b'...'} means in Python: this is a byte object, not a
+  string.
+\item \code{import time} loads the built-in module \code{time} (it does not
+  need to be installed separately).
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=12.6,free]{767.1}
+\begin{dashlist}
+\item With \code{time.sleep(0.1)}, a pause of a tenth of a second is
+  inserted -- this relieves the processor and prevents unnecessary loop
+  activity.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\heading{Step 7: Homework!}
+\end{region}
+
+\begin{region}{93.5}
+You can program really great things with Python -- you just need to get
+familiar with a few basics. To get you fit for this, here is a small
+homework assignment:\\
+At the university, we have licenses for an interactive online tutorial:
+\end{region}
+
+\begin{region}{133.9}
+\makebox[18.1bp][l]{\emoji{1F449}}\bluelink{https://www.uni-ulm.de/nawi/physik/fuer-studierende/angebote-fuer-studierende/opb-online-python-brueckenkurs/}{Online Python Bridging Course (OPB)}
+\end{region}
+
+\placegraphic{56.7}{138.5}{132.1}{qr-code-opb.png}
+
+\begin{region}{283.5}
+\subheading{Task until the next session (in two weeks):}
+\end{region}
+
+\begin{region}[pitch=13]{295.5}
+\begin{dashlist}
+\item Work through \textbf{chapters 1 to 11}
+\item Pass the \textbf{challenges ``Chapters 1--7''} and
+  \textbf{``Chapters 8--11''}
+\end{dashlist}
+\end{region}
+
+\begin{region}{334.5}
+The chapters are \textbf{short and doable} -- about 5--10 minutes each. So
+no panic!
+\end{region}
+
+\begin{region}{358.5}
+Afterwards, you will have a good understanding of central language elements
+of Python, e.g.:
+\end{region}
+
+\begin{region}[pitch=13]{370.5}
+\begin{dashlist}
+\item \textbf{Variables} (chapter~4)
+\item \textbf{Numbers} (chapter~5)
+\item \textbf{Strings} (chapter~6)
+\item \textbf{Booleans} (chapter~7)
+\item \textbf{If statements} (chapter~8)
+\item \textbf{Lists} (chapter~9)
+\item \textbf{For loops} (chapter~10)
+\item \textbf{While loops} (chapter~11)
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=16.4]{486.5}
+If reading the serial interface was not motivation enough for you -- just
+wait for the next chill-out step\,\emoji{1F609}
+\end{region}
+
+\begin{region}{533.2}
+\emoji{1F3AE} \textbf{Chill-out step: Breakout -- almost done…}
+\end{region}
+
+\begin{region}[pitch=14.2]{559.4}
+In the directory \code{python}, you will also find the Python program
+\code{breakout.py}. It is not yet the finished game -- but exactly what you
+will be able to program yourselves next time, once you have diligently
+worked through the online Python course. \emoji{1F609}
+\end{region}
+
+\begin{region}{614.0}
+But now: just try it out! Run the program: \code{python breakout.py}
+\end{region}
+
+\begin{region}{639.0}
+\subheading{But afterwards, we clean up}
+Remove \code{breakout.py} from your repository -- because writing it
+yourselves is more fun!
+\end{region}
+
+\begin{region}{675.6}
+\code{git rm breakout.py}\\
+\code{git commit -a -m "Fertig!"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{723.7}
+Next time, you will build the game yourselves step by step --\\
+and understand exactly how Python talks to hardware.
+\end{region}
+
+\end{document}
