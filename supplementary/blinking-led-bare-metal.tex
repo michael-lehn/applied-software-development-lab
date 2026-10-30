@@ -451,8 +451,7 @@ a special file in which the machine code and the memory addresses are
 encoded. A common format for this is the so-called \emph{Intel HEX format},
 which is understood by many programs – including \texttt{avrdude}.
 
-Our machine code can be packed as follows into a file \texttt{led.hex} that
-uses this format:
+In this format, our machine code is stored in a file \texttt{led\_pin2.hex}:
 
 \vspace{15bp}
 \begin{lstlisting}[
@@ -465,7 +464,7 @@ uses this format:
 \end{lstlisting}
 
 \noindent
-In this case, the file \texttt{led.hex} contains two so-called
+In this case, the file \texttt{led\_pin2.hex} contains two so-called
 \emph{records}, each shown as one line. Each record begins with a colon
 (\texttt{:}) and consists of a series of hexadecimal digits that are
 interpreted in groups:
@@ -798,11 +797,11 @@ in order to identify the correct device name.
 
 \noindent
 The program \texttt{avrdude} can then be used to transfer the machine program
-stored in \texttt{led.hex} to the flash memory of the microcontroller. The
+stored in \texttt{led\_pin2.hex} to the flash memory of the microcontroller. The
 complete command looks roughly like this:
 
 \begin{lstlisting}[basicstyle=\ttfamily]
-avrdude -c arduino -P /dev/ttyUSB0 -p atmega328p -U flash:w:led.hex:i
+avrdude -c arduino -P /dev/ttyUSB0 -p atmega328p -U flash:w:led_pin2.hex:i
 \end{lstlisting}
 
 The options stand for:
@@ -822,10 +821,10 @@ The options stand for:
 	Specifies the target processor, here the ATmega328P (as found on an
 	Arduino Uno).
 
-    \item \texttt{-U flash:w:led.hex:i} \\
+    \item \texttt{-U flash:w:led\_pin2.hex:i} \\
 	Means: the flash memory (\texttt{flash}) is to be written
 	(\texttt{w} = write) with the data from the file
-	\texttt{led.hex}. The \texttt{i} at the end stands for the file
+	\texttt{led\_pin2.hex}. The \texttt{i} at the end stands for the file
 	format – here: Intel HEX.
 \end{itemize}
 
@@ -847,7 +846,7 @@ the signal at pin 2.
     \centering
     \includegraphics[width=0.8\textwidth]{led-oszi1.png}
     \caption{
-	Oscilloscope measurement at pin 2 while \texttt{led.hex} is running.
+	Oscilloscope measurement at pin 2 while \texttt{led\_pin2.hex} is running.
 	The HIGH phase lasts about 125\,ns, the LOW phase about 250\,ns – the
 	signal is therefore not symmetric.
     }
@@ -2185,10 +2184,11 @@ corresponds to the combined value
 In \autoref{lst:led_pin2_delay4}, the counter is initialized in lines 8 to 11
 with four \texttt{ldi} instructions. There we get
 \[
-    n = \texttt{r27:r26:r25:r24} = \texttt{0x00000200} = 512,
+    n = \texttt{r27:r26:r25:r24} = \texttt{0x00145854} = 1\,333\,332,
 \]
-which means that the loop is executed 512 times before the state of pin 2 is
-changed again.
+which means that the loop is executed 1\,333\,332 times before the state of
+pin~2 is changed again (\autoref{sec:delay4cycles} shows how this value was
+chosen).
 
 \newpage
 \noindent
@@ -2247,6 +2247,7 @@ i.e., all four registers contain \texttt{0x00} and there was no further
 borrow after the last \texttt{sbci} instruction.
 
 \subsection{Clock cycles per loop iteration}
+\label{sec:delay4cycles}
 
 \autoref{fig:delay4} shows a flowchart for \autoref{lst:led_pin2_delay4}.
 Although we have considerably more instructions than with the one-register
@@ -2347,20 +2348,20 @@ LED blinks at about 1\,Hz.
     };
 \node (step6) [box, below=of step5]
     {
-	\texttt{ldi r24, 0x00} \\
-	\small r24 = 0x00\\
+	\texttt{ldi r24, 0x54} \\
+	\small r24 = 0x54\\
 	\small 1 cycle
     };
 \node (step7) [box, below=of step6]
     {
-	\texttt{ldi r25, 0x02} \\
-	\small r25 = 0x02\\
+	\texttt{ldi r25, 0x58} \\
+	\small r25 = 0x58\\
 	\small 1 cycle
     };
 \node (step8) [box, below=of step7]
     {
-	\texttt{ldi r26, 0x00} \\
-	\small r26 = 0x00\\
+	\texttt{ldi r26, 0x14} \\
+	\small r26 = 0x14\\
 	\small 1 cycle
     };
 \node (step9) [box, below=of step8]
