@@ -1058,10 +1058,10 @@ First, enter the following:
 \begin{region}[pitch=13.2]{531.1}
 \begin{codeblock}[basicstyle=\codexi{13.2}]
 class Ball:
-    def init(ich, x):
-        ich.x = x
-    def print(ich):
-        print(f"mein x ist {ich.x}")
+    def init(me, x):
+        me.x = x
+    def print(me):
+        print(f"my x is {me.x}")
 \end{codeblock}
 \end{region}
 
@@ -1136,10 +1136,10 @@ the class \code{Ball} and modify it):
 \begin{region}[pitch=13.2]{458.4}
 \begin{codeblock}[basicstyle=\codexi{13.2}]
 class Ball:
-    def __init__(ich, x):
-        ich.x = x
-    def print(ich):
-        print(f"mein x ist {ich.x}")
+    def __init__(me, x):
+        me.x = x
+    def print(me):
+        print(f"my x is {me.x}")
 \end{codeblock}
 \end{region}
 
@@ -1157,7 +1157,7 @@ manually -- Python takes care of that \textbf{automatically}.
 \end{region}
 
 \begin{region}[pitch=14.3]{652.8}
-Usually, you do not use \code{ich} but \code{self} as the \textbf{first
+Usually, you do not use \code{me} but \code{self} as the \textbf{first
 parameter} of the functions (also called \textbf{object methods}); it
 specifies the object whose attributes are \textbf{initialized},
 \textbf{manipulated}, or \textbf{read}.
