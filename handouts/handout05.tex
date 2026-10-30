@@ -1,0 +1,1007 @@
+% Applied Software Development Lab -- Lab Handout 5: The word class makes an appearance
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 5".
+\documentclass{aslab}
+\sethandout{5}{The word class makes an appearance}
+\renewcommand*\handouttitle{The word \codearg{class} makes an appearance}
+\graphicspath{{../figures/handout05/}{../figures/shared/}}
+
+%% Lists used in this handout
+% "A)" items (bold titles, text at +18bp)
+\newlist{letters}{enumerate}{3}
+\setlist[letters]{label={\Alph*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+% "(i)" items
+\newlist{romans}{enumerate}{3}
+\setlist[romans]{label={(\roman*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+% "(I)" items
+\newlist{Romans}{enumerate}{3}
+\setlist[Romans]{label={(\Roman*)},leftmargin=18bp,labelwidth=15bp,
+  labelsep=3bp,align=left,labelindent=0pt}
+% bold "(1)" items (input lines)
+\newlist{inputs}{enumerate}{3}
+\setlist[inputs]{label={\bfseries(\arabic*)},leftmargin=18bp,labelsep=*,
+  align=left,labelindent=0pt}
+% numbered lists with a regular-weight number
+\newlist{ptasks}{enumerate}{3}
+\setlist[ptasks]{label={\arabic*.},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+% "•" items with the text at +9bp
+\newlist{dotlist}{itemize}{3}
+\setlist[dotlist]{label={\textbullet},leftmargin=9bp,labelsep=*,align=left,
+  labelindent=0pt}
+
+%% Python listings with the colors of the original
+%%   @..@ orange (line numbers, keywords), ~..~ cyan (built-ins, names),
+%%   ^..^ red (strings, numbers), !..! magenta (import, escapes)
+\lstdefinestyle{py}{style=aslab,
+  moredelim=[is][\color{codeorange}]{@}{@},
+  moredelim=[is][\color{codecyan}]{~}{~},
+  moredelim=[is][\color{codered}]{^}{^},
+  moredelim=[is][\color{codemagenta}]{!}{!}}
+% typographic quotes inside a listing (as in the original code): |...|
+\lstdefinestyle{curly}{style=aslab,escapechar=|}
+\newcommand*\codeix{\fontsize{9bp}{12bp}\ttfamily\lineskiplimit=-\maxdimen}
+\newcommand*\codex[1]{\fontsize{10bp}{#1bp}\ttfamily\lineskiplimit=-\maxdimen}
+
+% keep the baseline pitch fixed even next to tall inline code boxes
+\lineskiplimit=-\maxdimen
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{124.1}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=13.3]{138.6}
+{\bfseries\color{aslabblue}
+\begin{dashlist}
+\item Reading the serial interface with Python
+\item Using control structures ({\mdseries\code{if}}, {\mdseries\code{for}},
+  {\mdseries\code{while}}) and simple data types
+\item A step-by-step introduction to object-oriented programming (including
+  the motivation, but without overkill -- the rest comes later)
+\end{dashlist}\par}
+\end{region}
+
+\begin{region}{204.6}
+\heading{Step 1: Cloning your own repository and building the game controller}
+\end{region}
+
+\begin{region}[pitch=14.2]{233.2}
+\textbf{Goal:} Picking up where we left off last time -- starting with the
+microcontroller code.
+\end{region}
+
+\begin{region}[pitch=13.2]{275.0}
+On the breadboard, rebuild the game controller from Lab Handout~4, connect it
+to the microcontroller, and connect the microcontroller to your computer via
+USB.
+\end{region}
+
+\begin{region}[pitch=13.2]{314.5}
+As always:
+\begin{dashlist}
+\item Open two terminals (left for editing, right for running commands).
+\item In addition, open a web browser and go to your Git repository at\\
+  \code{https://gitlab.uni-ulm.de/USERNAME/asp-ulm}
+\end{dashlist}
+\end{region}
+
+\begin{region}{393.3}
+\subheading{Left terminal (editing)}
+\end{region}
+
+\begin{region}[pitch=13.35]{407.6}
+\begin{letters}
+\item \textbf{Clone the repository and change the directory}\\
+  Clone the repository with:\\
+  \code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}\\
+  Change the directory:\\
+  \code{cd asp-ulm/controller}
+\end{letters}
+\end{region}
+
+\begin{region}[pitch=13.6]{474.9}
+\begin{letters}[start=2]
+\item \textbf{Open the editor}\\
+  Open the file \code{controller.ino} in the editor of your choice.
+\end{letters}
+\end{region}
+
+\begin{region}[pitch=13.35]{502.7}
+\begin{letters}[start=3]
+\item \textbf{Think ;-)}\\
+  Read the code carefully and think about what should happen when you
+  press the push button or turn the potentiometer.
+\end{letters}
+\end{region}
+
+\begin{region}{568.8}
+\subheading{Right terminal (running commands)}
+\end{region}
+
+\begin{region}[pitch=12.5]{581.8}
+\begin{letters}
+\item \textbf{Change the directory}\\
+  \code{cd asp-ulm/controller}
+\item \textbf{Make the USB port visible to WSL}\\
+  \code{usb_check}
+\item \textbf{Flash the microcontroller}\\
+  \code{make upload}
+\item \textbf{Start the serial monitor}\\
+  \code{make monitor}
+\item \textbf{Test}\\
+  Check whether the expected behavior occurs when you press the push button
+  and turn the potentiometer.
+\end{letters}
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Step 2: A serial monitor of our own making}
+\end{region}
+
+\begin{region}{98.0}
+\textbf{Goal:} Reading the serial interface with a Python program.
+\end{region}
+
+\begin{region}[pitch=13.5]{124.5}
+What is special about our own version: the output is not produced
+character by character, but only once a complete line (that is, up to the
+line break) has been received. As soon as that is the case, \textbf{this
+line is output all at once}. As long as that is not the case, nothing
+happens.
+\end{region}
+
+\begin{region}{205.5}
+\subheading{Preparation}
+\end{region}
+
+\begin{region}[pitch=13.55]{233.0}
+\begin{tasks}
+\item \textbf{Left terminal}
+  \begin{letters}
+  \item \textbf{Change the directory}\\
+    \code{cd ../python}
+  \item \textbf{Open the editor}\\
+    Open the file \code{serial-reader.py} in the editor of your choice.
+  \item \textbf{Think ;-)}\\
+    Read the code carefully and think about what should happen when you
+    press the push button or turn the potentiometer. If necessary, go
+    through Step~6 of Lab Handout~4 again to make sure you understand:
+    \begin{romans}
+    \item What do \code{ser.in_waiting} and \code{ser.read} do?
+    \item What do the remaining statements do?
+    \item How are the loops nested -- and why?
+    \end{romans}
+  \end{letters}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.65]{396.1}
+\begin{tasks}[start=2]
+\item \textbf{Right terminal}
+  \begin{letters}[label={\bfseries\Alph*)}]
+  \item \textbf{Change the directory}\\
+    \code{cd ../python}
+  \item \textbf{Test}\\
+    Start the program and check whether the expected behavior occurs when
+    you press the push button and turn the potentiometer.
+  \end{letters}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.5]{490.9}
+You should now be at the point where individual bytes are received. For
+example, \code{ch} is output as \code{b'X'} -- an object of type bytes, i.e.,
+a data type for ``raw'' binary data. How to convert \code{ch} into readable
+text is something we will explore experimentally in a Python shell in a
+moment.
+\end{region}
+
+\begin{region}{558.5}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.3]{585.2}
+\begin{tasks}
+\item If you have not already done so, stop the Python program in the
+  right terminal with \code{Control-C}.
+\end{tasks}
+\end{region}
+
+\begin{region}{611.9}
+\begin{tasks}[start=2]
+\item Start the interactive Python shell with \code{python}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{625.2}
+\begin{tasks}[start=3]
+\item The Python shell works much like the terminal shell you use to
+  navigate the file system or run commands -- except that here you type in
+  Python statements.
+  \blank
+  Enter the following, one after the other:
+  \begin{inputs}
+  \item \code{ch = b'A'}
+  \item \code{print(ch)}
+  \item \code{type(ch)}
+  \item \code{s = bytes.decode(ch)}
+  \item \code{type(s)}
+  \end{inputs}
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}[x=74.7,right=0]{68.5}
+You should observe:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{95.6}
+\begin{codeblock}[basicstyle=\codex{14.3}]
+>>> ch = b'A'
+>>> print(ch)
+b'A'
+>>> type(ch)
+<class 'bytes'>
+>>> type(ch)
+<class 'bytes'>
+>>> s = bytes.decode(ch)
+>>> type(s)
+<class 'str'>
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{251.3}
+You can use \code{type(...)} to query the type of a variable. And the
+function \code{bytes.decode(...)} lets you convert a bytes object such as
+\code{ch} into a string.
+\end{region}
+
+\begin{region}[pitch=13.25]{279.0}
+\begin{tasks}[start=4]
+\item \textbf{Tip for using the Python shell:} With the \textbf{up and down
+  arrow keys} you can scroll through the input history and run or edit
+  commands you have already entered.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{318.6}
+\begin{tasks}[start=5]
+\item Now we explore experimentally how strings can be concatenated. To do
+  this, enter the following in the Python shell:
+  \begin{inputs}
+  \item \code{buffer = ""}
+  \item \code{print(buffer)}
+  \item \code{buffer = buffer + s}
+  \item \code{print(buffer)}
+  \item \code{buffer += s}
+  \item \code{print(buffer)}
+  \end{inputs}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{437.4}
+You see:
+\begin{dotlist}
+\item With \code{+} you can concatenate two strings.
+\item The notation \code{buffer += s} is equivalent to
+  \code{buffer = buffer + s}, but shorter and more convenient.
+\end{dotlist}
+\end{region}
+
+\begin{region}[pitch=13.2]{490.7}
+\begin{tasks}[start=6]
+\item Now we use a for loop to simulate that we receive individual bytes one
+  after the other, convert each of them into text, and append it to a
+  string.
+  \blank
+  Enter the following:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{557.3}
+\begin{codeblock}[basicstyle=\codex{14.3}]
+buffer = ""
+for ch in [b'A', b'\n', b'X', b' ', b'1', b'\n']:
+    ch = bytes.decode(ch)
+    buffer += ch
+print(buffer)
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{642.3}
+This is not quite what we will need later -- but it is heading in the right
+direction.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{668.7}
+Here is what happens:
+\begin{dotlist}
+\item \code{buffer} is initially an empty string.
+\item In each loop iteration, a byte (\code{ch}) is converted into a string.
+\item This string is appended to \code{buffer}.
+\item At the end, \code{buffer} is output once.
+\end{dotlist}
+Note: Although there is only one \code{print} statement, two lines are
+displayed.\\
+This is because \code{buffer} contains two line breaks
+(\code{\n}) -- and \code{print(buffer)} outputs the entire text including
+the line breaks it contains.
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}[pitch=13.35]{68.8}
+\begin{tasks}[start=7]
+\item Now the line break (\code{\n}) should no longer be appended to
+  \code{buffer}. Instead, in this case the current content of \code{buffer}
+  should be output, and \code{buffer} should then be reset to an empty
+  string. To do this, change the code as follows:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.1]{112.6}
+\begin{codeblock}[style=curly,basicstyle=\codex{12.1}]
+buffer = ""
+for ch in [b'A', b'\n', b'X', b' ', b'1', b'\n']:
+    ch = bytes.decode(ch)
+    if ch == '\n':
+        print(f"Zeile> |\textquoteleft|{buffer}|\textquoteright|")
+        buffer = ""
+    else:
+        buffer += ch
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{214.5}
+The statement \code{print(f"Zeile> {buffer}")} produces formatted output:
+the placeholder \code{{buffer}} is automatically replaced by the current content
+of the variable \code{buffer}.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.1]{245.2}
+\begin{codeblock}[style=curly,basicstyle=\codex{12.1}]
+Zeile> |\textquoteleft|A|\textquoteright|
+Zeile> |\textquoteleft|X 1|\textquoteright|
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.45]{274.3}
+\begin{tasks}[start=8]
+\item One more little thing: the microcontroller does not send line breaks as
+  a single \code{b'\n'}, as is usual in the Unix world, but in a format that
+  the Windows world also understands: a \code{b'\r'} (carriage return)
+  followed by \code{b'\n'} (line feed).
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{319.1}
+This is a perfect opportunity, though, to introduce an \code{elif} and the
+keyword \code{pass} -- so that we simply ignore the character \code{\r}, as
+it should be. To do this, change the code as follows:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.1]{362.9}
+\begin{codeblock}[basicstyle=\codex{12.1}]
+buffer = ""
+for ch in [b'A', b'\r', b'\n', b'X', b' ', b'1', b'\r', b'\n']:
+    ch = bytes.decode(ch)
+    if ch == '\n':
+        print(f"Zeile> {buffer}")
+        buffer = ""
+    elif ch == '\r':
+        pass
+    else:
+        buffer += ch
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{489.1}
+The \code{elif} condition detects the carriage return character
+(\code{'\r'}) and then skips it with \code{pass}. Everything else is
+appended to \code{buffer} as before.\\
+\textbf{Additional task:} Test what happens without the \code{elif} fix.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.25]{543.5}
+\code{pass} in Python simply means: do nothing. This is comparable to a
+\code{nop} instruction (``no operation'') in assembly language -- a
+placeholder that explicitly does nothing but has to be there syntactically.
+\end{region}
+
+\begin{region}[pitch=14.2]{584.1}
+\begin{tasks}[start=9]
+\item \textbf{Now comes the grand finale}\\
+  Now it is your turn to put the \textbf{knowledge from your experiments}
+  into practice!
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{626.8}
+\begin{dotlist}
+\item \textbf{Exit the Python shell} with \code{Control-D}.
+\item Modify \code{serial-reader.py} so that the received bytes are output
+  line by line as text. As soon as a complete line has been received (ending
+  with \code{\n}), it should be output in full. The carriage return
+  character (\code{\r}) is ignored -- as before.
+\item \textbf{Test your program} in the right terminal.
+\item If everything works:\\
+  \code{git commit -a -m "serial reader with line buffer"}\\
+  \code{git push}\\
+  With this, you have built your own serial non-blocking buffered line
+  reader -- congratulations!
+\end{dotlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{82.6}
+\heading{Goal of the following steps: Code organization is everything!}
+\end{region}
+
+\begin{region}[pitch=13.17]{110.2}
+In the next steps, the existing code is reorganized so that it becomes
+modular, reusable, and easy to extend -- for example, as a building block
+for later projects (such as our game). Along the way, we introduce the
+concept of object-oriented programming (OOP) step by step -- each time with a
+concrete example.\\
+In the end, two central functions (or methods) should be available:
+\end{region}
+
+\begin{region}[pitch=13.44]{188.9}
+\begin{dashlist}
+\item \code{connect(port)}\\
+  Establishes the connection to the serial interface and returns an open
+  Serial object, which is stored internally.
+\item \code{readline()}\\
+  Checks whether a complete line has been received. Returns the line as a
+  string if there is one, otherwise \code{None}. The received bytes are
+  buffered internally and only output as a line once a line break
+  (\code{\n}) has been received. The carriage return character (\code{\r})
+  is ignored.
+\end{dashlist}
+\end{region}
+
+\begin{region}{309.4}
+The restructuring takes place in several stages:
+\end{region}
+
+\begin{region}[pitch=13.55]{336.7}
+\begin{ptasks}
+\item \textbf{Modularization with global variables:}\\
+  The logic is moved into two functions that use the global variables
+  \code{ser} and \code{buffer}. This results in a first, easy-to-understand
+  modular structure.
+\item \textbf{Conversion into a class with static attributes and methods:}\\
+  In the second step, the existing structure is turned into a class.
+  \code{ser} and \code{buffer} become static attributes, \code{connect} and
+  \code{readline} become static methods. This does not change how the code
+  is used, but it brings order into the program.
+\item \textbf{(Optional) Instance-based design for multiple use:}\\
+  In a further step, the class could be extended so that several serial
+  connections are possible at the same time -- using instance attributes
+  and methods.
+\end{ptasks}
+\end{region}
+
+\begin{region}[pitch=13.75]{485.9}
+\subheading{No need to fear technical terms:}
+Do not let words such as \emph{static attributes}, \emph{instance
+attributes}, \emph{methods}, \emph{modules}, or \emph{classes} put you off.
+We develop all of this step by step using concrete examples -- and you will
+see: behind these ``fancy'' expressions are simple, easy-to-understand
+concepts.
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\heading{Step 3: Functions with shared variables}
+\end{region}
+
+\begin{region}[pitch=13.2]{97.0}
+Fortunately, we already have a working program that reads the serial
+interface line by line. This already gives us a good idea of what the two
+planned functions should look like:
+\end{region}
+
+\begin{region}[pitch=13.54]{149.4}
+\begin{dashlist}
+\item The function \code{connect} uses \code{ser = serial.Serial(...)} to
+  establish a connection to the USB port.
+\item The variable \code{ser} is then used in the function \code{readline}
+  to
+  \begin{dashlist}
+  \item query whether new bytes are available
+    (\code{ser.in_waiting > 0}), and
+  \item read a byte if needed (\code{ser.read(1)}).
+  \end{dashlist}
+\item The function \code{readline} also uses a variable \code{buffer} to
+  which new bytes are appended (after decoding). This buffer should have
+  been initialized as an empty string before the first call of
+  \code{readline} -- this can conveniently be done in \code{connect}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.2]{270.9}
+So we need two variables -- \code{ser} and \code{buffer} -- that can be used
+by both functions. The obvious solution: \textbf{global variables}.
+\end{region}
+
+\begin{region}[pitch=13.35]{312.5}
+However, Python has a nasty little catch when you want to \textbf{modify}
+global variables. Let us look at this using a simple proof of concept:\\
+In the left terminal, create the file \code{controller.py} in an editor of
+your choice, with this content:
+\end{region}
+
+\begin{region}[pitch=12]{362.5}
+\begin{codeblock}[style=py,basicstyle=\codeix]
+@  1 @ser = ~None~
+@  2 @buffer = ~None~
+@  3@
+@  4 def@ ~connect~(port):
+@  5@
+@  6 @    ser = f^"connect to {port}"^
+@  7 @    buffer = ^"empty"^
+@  8@
+@  9 def@ ~readline~():
+@ 10@
+@ 11 @    ~print~(f^"reading from {ser}"^)
+@ 12 @    buffer += ^", some data"^
+@ 13 @    ~print~(f^"buffer: {buffer}"^)
+@ 14@
+@ 15 @connect(^"/dev/ttyUSB0"^)
+@ 16 @readline()
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.63]{569.5}
+By ``proof of concept'' we mean: we use the simplest possible example to
+test whether two functions can share the same variables. The goal is
+\textbf{not yet} the serial interface -- for now, the point is only that
+\code{connect} ``prepares'' something, and \code{readline} accesses it and
+carries on.
+\end{region}
+
+\begin{region}[pitch=14.2]{624.6}
+However, this does \textbf{not} work yet. We will \textbf{analyze and fix}
+this step by step in a moment, and then gradually build in the desired
+functionality.
+\end{region}
+
+\begin{region}{666.3}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.3]{693.0}
+\begin{ptasks}
+\item In the right terminal, run the program with
+  \code{python controller.py} and confirm that there is an error.
+\end{ptasks}
+\end{region}
+
+\begin{region}[pitch=14.3]{720.4}
+\begin{ptasks}[start=2]
+\item The error message says (in a more or less understandable way) that
+  in \textbf{line 12} the variable \code{buffer} is accessed, but that it
+  \textbf{does not exist}. This is actually surprising -- after all, we did
+  create \code{buffer} in \textbf{line 2}, outside the function!\\
+  But: \textbf{by default, Python assumes} that only \textbf{local
+  variables are modified} inside a function. So if you write
+  \code{buffer += ...}, Python interprets
+\end{ptasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}[x=74.7,right=0,pitch=13.7]{68.8}
+this as an attempt to modify a local variable \code{buffer} --
+and that one has not been defined before.\\
+So we have to \textbf{tell Python explicitly} that the global variable
+\code{buffer} is meant. This is done by changing \textbf{line 10} to:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.65]{123.7}
+\makebox[27.5bp][l]{\color{codeorange}10}{\color{codeorange}global}
+buffer\\
+Run the program again now. Confirm that there is still an error message
+-- \textbf{but a different one}.
+\end{region}
+
+\begin{region}[pitch=14.02]{165.3}
+\begin{ptasks}[start=3]
+\item \textbf{The new error message} says that the expression
+  \code{buffer += ...} in \textbf{line 12} is not allowed -- because
+  \code{buffer} has the value \code{None} at this point. When
+  \code{connect} is called, a variable \code{buffer} is indeed set in \textbf{line 7},
+  \textbf{but not the global variable} that we created in \textbf{line 2}.
+  Instead, Python simply created a \textbf{local variable} \code{buffer} in
+  the function \code{connect} -- just as it always does by default. The
+  global variable \code{buffer} therefore remains \textbf{unchanged} at
+  \code{None}.
+\end{ptasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.7]{249.4}
+\textbf{Solution:} In the function \code{connect}, too, we have to say
+explicitly that we want to modify the global variable \code{buffer}. And by
+now you know how to do that \emoji{1F609}
+\end{region}
+
+\begin{region}[pitch=14.2]{297.0}
+\begin{ptasks}[start=4]
+\item \textbf{There is no longer an error message}, but the program does
+  \textbf{not do what it is supposed to do}. The output is:
+\end{ptasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.1]{337.2}
+\begin{codeblock}[basicstyle=\codex{12.1}]
+reading from None
+buffer: empty, some data
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{376.0}
+\textbf{What we would expect, however:}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.1]{402.0}
+\begin{codeblock}[basicstyle=\codex{12.1}]
+reading from connect to /dev/ttyUSB0
+buffer: empty, some data
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.85]{440.1}
+In the function \code{connect}, we did correctly modify the global
+\code{buffer} -- but \code{ser} was also only initialized locally. As a
+result, the global variable \code{ser} remains \code{None}, and that is
+exactly what we see in the output of \code{readline}.\\
+\textbf{Solution:} The variable \code{ser}, too, must be explicitly declared
+as \textbf{global} in the function \code{connect}. This is done by writing
+\textbf{line 5} as follows:
+\end{region}
+
+\begin{region}[x=74.7,right=0]{523.6}
+\begin{codeblock}[style=py,basicstyle=\codex{12}]
+@ 5 @    @global@ buffer, ser
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{551.6}
+\textbf{The nastiest part of it all:} In the function \code{readline}, we
+also access \code{ser} in \textbf{line 11} -- without writing global
+\code{ser} there. \textbf{And yet it works!}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.7]{593.4}
+\textbf{Why?} Because in \code{readline} we only \textbf{read} \code{ser},
+but do \textbf{not modify} it. Python allows access to global variables
+\textbf{without a} \code{global}\textbf{ declaration, as long as you only
+read them}. Only when you try to modify them (as with
+\code{buffer += ...}) do you need the \code{global}.\\
+This is a nasty but important distinction!
+\end{region}
+
+\begin{region}[pitch=13.3]{648.6}
+\begin{ptasks}[start=5]
+\item Even though it is \textbf{not technically necessary}, change
+  \textbf{line 10} as follows:
+\end{ptasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{661.9}
+\begin{codeblock}[style=py,basicstyle=\codex{12}]
+@10 @    @global@ buffer, ser
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{676.0}
+For ordinary mortals, it is then immediately \textbf{clear} that this
+function accesses \textbf{global variables} -- whether for reading or
+writing. This makes the code \textbf{easier to understand} and protects
+against errors if you later do change something about \code{ser} after all.
+\end{region}
+
+\begin{region}[pitch=13.4]{717.9}
+\begin{ptasks}[start=6]
+\item Now add the new file to the repository:\\
+  \code{git add controller.py}\\
+  \code{git commit -a -m "proof of concept"}\\
+  \code{git push}
+\end{ptasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\heading{Step 4: Extending the proof of concept}
+\end{region}
+
+\begin{region}[pitch=13.75]{85.2}
+We can now copy code from our program \code{serial-reader.py} into
+\code{controller.py} to obtain the \textbf{actual functionality}. This
+involves a bit of typing -- but it is not particularly tricky.
+\end{region}
+
+\begin{region}[pitch=14.3]{129.0}
+Below you can see what the code might look like \textbf{after a first
+iteration}. First, a brief overview of \textbf{what has been changed or
+added}:
+\end{region}
+
+\begin{region}[pitch=13.8]{158.8}
+\begin{dashlist}
+\item \textbf{Lines 1--2:} The required modules are imported:
+  \begin{dashlist}
+  \item \code{serial}, to communicate with the serial interface,
+  \item \code{time}, to put the process to sleep from time to time.
+  \end{dashlist}
+\item \textbf{Lines 7--11:} The function \code{connect} now actually
+  establishes a connection to the serial interface and initializes
+  \code{ser}.
+\item \textbf{Lines 13--27:} The function \code{readline} reads all
+  available characters, appends them to \code{buffer}, and checks for the
+  end of a line:
+  \begin{dashlist}
+  \item If a \textbf{line feed} (\code{\n}) is found, it prints the content
+    of \code{buffer} and resets \code{buffer}.
+  \item If a \textbf{carriage return} (\code{\r}) is found, nothing happens.
+  \item Otherwise, the character is added to \code{buffer}.
+  \item Important: The function \textbf{always} returns \code{None} -- even
+    if it succeeds! (We will fix that later.)
+  \end{dashlist}
+\item \textbf{Lines 28--33:} The main program now uses \code{connect} and
+  \code{readline}:
+  \begin{dashlist}
+  \item In \textbf{line 28}, the connection is established.
+  \item Then \code{readline} is called in an infinite loop.
+  \item If \code{readline} returns a line (that is, not \code{None}), it is
+    output.
+  \end{dashlist}
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.4]{395.8}
+This already looks quite usable -- but: it does not quite work yet. Because,
+as mentioned above, \code{readline} always returns \code{None}, even if a
+line has actually been read.
+\end{region}
+
+\begin{region}[pitch=11]{424.1}
+\begin{codeblock}[style=py,basicstyle=\codex{11}]
+@  1 @!import! serial
+@  2 @!import! time
+@  3@
+@  4 @ser = ~None~
+@  5 @buffer = ~None~
+@  6@
+@  7 def@ ~connect~(port):
+@  8 @    @global@ ser, buffer
+@  9 @    ser = serial.Serial(port, ^9600^)
+@ 10 @    buffer = ^""^
+@ 11 @    ~print~(f^"connected to {port}"^)
+@ 12@
+@ 13 def@ ~readline~():
+@ 14 @    @global@ ser, buffer
+@ 15@
+@ 16 @    @while@ ser.in_waiting > ^0^:
+@ 17 @        ch = ser.read(^1^)
+@ 18 @        ch = ~bytes~.decode(ch)
+@ 19 @        @if@ ch == ^'^!\n!^'^:
+@ 20 @            ~print~(f^"Zeile> {buffer}"^)
+@ 21 @            buffer = ^""^
+@ 22 @        @elif@ ch == ^'^!\r!^'^:
+@ 23 @            @pass@
+@ 24 @        @else@:
+@ 25 @            buffer += ch
+@ 26 @    @return@ ~None~
+@ 27@
+@ 28 @connect(^"/dev/ttyUSB0"^)
+@ 29 while@ ^1^:
+@ 30 @    line = readline()
+@ 31 @    @if@ line @is@ @not@ ~None~:
+@ 32 @        ~print~(f^"readline {line}"^)
+@ 33 @    time.sleep(^0.1^)
+\end{codeblock}
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}{69.4}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=14.25]{96.2}
+\begin{ptasks}
+\item Adapt \code{controller.py} accordingly. Confirm that the received data
+  is not output by the \code{print} in \textbf{line 32} (as actually
+  intended), but by the output in \textbf{line 20}.
+\end{ptasks}
+\end{region}
+
+\begin{region}[pitch=13.45]{138.9}
+\begin{ptasks}[start=2]
+\item The obvious idea is to return the content of \code{buffer} in
+  \textbf{line 20} instead of just outputting it. So change the line to
+  \code{return buffer}. Confirm that the behavior has now changed, but is
+  not yet quite what we want.
+\end{ptasks}
+\end{region}
+
+\begin{region}[pitch=13.5]{179.9}
+\begin{ptasks}[start=3]
+\item \textbf{Idea for solving the current problem}\\
+  When we detect a complete line in \code{readline()} (that is, at the
+  \code{\n}), then we:
+  \begin{Romans}
+  \item store the current value of \code{buffer} in a new local variable,
+    e.g., \code{line}
+  \item reset \code{buffer} to the empty string \code{""}
+  \item then return \code{line}
+  \end{Romans}
+\end{ptasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{261.4}
+\textbf{Think for yourselves} about how you can implement this strategy in
+Python code. Adapt the corresponding part of the function
+\code{readline()} accordingly. Then run the program and check whether
+everything works as desired.
+\end{region}
+
+\begin{region}[pitch=13.55]{315.5}
+\begin{ptasks}[start=4]
+\item \textbf{If everything now works as desired:}\\
+  \code{git commit -a -m "connect, readline"}\\
+  \code{git push}
+\end{ptasks}
+\end{region}
+
+\begin{region}{369.9}
+\heading{Step 5: More structure -- er, make it classy!}
+\end{region}
+
+\begin{region}[pitch=13.9]{391.9}
+In our program, certain things \textbf{obviously belong together}:
+\begin{dashlist}
+\item the two global variables \code{ser} and \code{buffer}, and
+\item the functions \code{connect} and \code{readline}.
+\end{dashlist}
+We \textbf{know} this -- at least \textbf{today}, because we worked hard to
+get these four loners to finally work together \textbf{as a team}.
+\end{region}
+
+\begin{region}[pitch=14.2]{474.9}
+But: if you do not yet know the code and how it works, you do \textbf{not
+immediately} see that these things belong together.
+\end{region}
+
+\begin{region}[pitch=13.6]{516.6}
+Fortunately, Python offers a language feature that lets you \textbf{make}
+exactly this structure \textbf{visible}. And yes -- this is where the magic
+word comes up: \code{class}
+\end{region}
+
+\begin{region}[pitch=13.8]{553.1}
+Here is an almost self-explanatory example of how our code can be expressed
+\textbf{more clearly and in a more structured way} with a class. And yes --
+it is once again a \textbf{proof of concept}, which you will transfer to the
+real code in a moment:
+\end{region}
+
+\begin{region}[pitch=12]{607.1}
+\begin{codeblock}[style=py,basicstyle=\codeix]
+@  1 class@ ~Controller~:
+@  2 @    ser = ~None~
+@  3 @    buffer = ~None~
+@  4@
+@  5 @    @def@ ~connect~(port):
+@  6 @        Controller.ser = f^"connected to {port}"^
+@  7 @        Controller.buffer = ^"empty"^
+@  8@
+@  9 @    @def@ ~readline~():
+@ 10 @        ~print~(f^"reading from {Controller.ser}"^)
+@ 11 @        Controller.buffer += ^", some data"^
+@ 12 @        ~print~(f^"buffer: {Controller.buffer}"^)
+@ 13@
+@ 14 @Controller.connect(^"bar"^)
+@ 15 @Controller.readline()
+\end{codeblock}
+\end{region}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{69.4}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{97.3}
+\begin{ptasks}
+\item Write the example program above into a file named
+  \code{controller_test.py} and run the program.
+\end{ptasks}
+\end{region}
+
+\begin{region}{123.7}
+\begin{ptasks}[start=2]
+\item You should have received the following output:
+\end{ptasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=11]{148.7}
+\begin{codeblock}[basicstyle=\fontsize{9bp}{11bp}\ttfamily]
+reading from connected to bar
+buffer: empty, some data
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{186.2}
+And with that, you can \textbf{already guess} what this small program is
+meant to express:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{212.9}
+The variables \code{ser} and \code{buffer} as well as the functions
+\code{connect} and \code{readline} are part of the class \code{Controller}.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.75]{252.8}
+One could also say:
+\begin{dotlist}
+\item They are encapsulated in the class,
+\item or they belong to the namespace \code{Controller}.
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.6]{305.9}
+The world of object-oriented programming (OOP) may be full of clever
+terms -- but what is meant is basically quite simple:
+\begin{dotlist}
+\item The variable \code{ser} in line 2 is actually called:
+  \code{Controller.ser}
+\item The variable \code{buffer} in line 3 is called: \code{Controller.buffer}
+\item The function \code{connect} in line 5 is fully called:
+  \code{Controller.connect}
+\item And \code{readline} in line 9 is: \code{Controller.readline}
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{403.8}
+\emoji{1F449} \textbf{And that is exactly why we no longer need a}
+\code{global}\textbf{!}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.8]{420.5}
+Because with this language feature (\code{class}), it is \textbf{absolutely
+clear} \textbf{which variable} the code refers to -- namely the one that
+\textbf{belongs to the class} \code{Controller}. This provides clarity,
+structure -- and fewer surprises.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.6]{474.7}
+So -- now it should be easy to apply this principle to \code{controller.py}.
+And once again, it is your turn! \emoji{1F60E}
+\end{region}
+
+\begin{region}[pitch=13.5]{508.0}
+\begin{ptasks}[start=3]
+\item If everything works as before (only now with class):\\
+  \code{git commit -a -m "mit class"}\\
+  \code{git push}
+\end{ptasks}
+\end{region}
+
+\end{document}
