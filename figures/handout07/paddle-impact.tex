@@ -1,0 +1,50 @@
+% Two balls hitting the paddle (Lab Handout 7, Step 5).
+% Coordinates in pixels of the original 2000 x 529 sketch.
+\begin{tikzpicture}[x=0.2254bp,y=-0.2254bp,
+    font=\fontsize{6.1bp}{7.3bp}\selectfont,
+    lbl/.style={anchor=base,inner sep=0,align=center},
+    big/.style={anchor=base,inner sep=0,align=center,text=figblue,
+      font=\fontsize{8.1bp}{9.7bp}\selectfont},
+    vel/.style={line width=1.9bp,-{Triangle[length=10bp,width=8.5bp]}}]
+  \definecolor{figball}{HTML}{F9BA00}
+  \definecolor{fignew}{HTML}{FBDFA1}
+  \definecolor{fignewpad}{HTML}{C7C2A5}
+  \definecolor{figblue}{HTML}{004D80}
+  \definecolor{figred}{HTML}{B51700}
+  \definecolor{figpaddle}{HTML}{A0C9FF}
+  \useasboundingbox (0,0) rectangle (2000,529);
+  \fill[figpaddle] (492,292) rectangle (1296,421);
+  \fill[figball] (426,172) circle[radius=67];
+  \fill[figball] (1114,195) circle[radius=67];
+  \foreach \p in {(623,335),(1312,357)} {
+    \fill[fignew] \p circle[radius=67];
+    \begin{scope}
+      \clip (492,292) rectangle (1296,421);
+      \fill[fignewpad] \p circle[radius=67];
+    \end{scope}}
+  \draw[line width=0.5bp] (492,292) -- (1296,292);
+  \foreach \p in {(426,172),(1114,195),(623,335),(1312,357)}
+    \fill \p circle[radius=11];
+  \draw[vel,figblue] (426,172) -- (623,335);
+  \draw[vel,figblue] (1114,195) -- (1312,357);
+  \foreach \p in {(494,292),(1296,292)} \fill[figblue] \p +(-6,-6) rectangle +(6,6);
+  \foreach \p in {(571,292),(1233,292)} \fill[figred] \p +(-6,-6) rectangle +(6,6);
+  % labels
+  \foreach \x in {291,1031} {
+    \node[lbl] at (\x,62) {Old position};
+    \node[lbl] at (\x,100) {(self.x, self.y)};}
+  \foreach \x in {650,1311} {
+    \node[lbl,text=figred] at (\x,110) {``Impact point''};
+    \node[lbl,text=figred] at (\x,146) {(px, Paddle.y)};}
+  \draw[figred,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (597,165) -- (575,280);
+  \draw[figred,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (1258,165) -- (1236,280);
+  \foreach \x in {696,1403} {
+    \node[lbl] at (\x,467) {Without reflection};
+    \node[lbl] at (\x,503) {(new\_x, new\_y)};}
+  \node[big] at (197,410) {``Left paddle edge''};
+  \node[big] at (197,459) {(Paddle.x, Paddle.y)};
+  \draw[figblue,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (318,375) -- (472,297);
+  \node[big] at (1690,302) {``Right paddle edge''};
+  \node[big] at (1690,350) {(Paddle.x + Paddle.width, Paddle.y)};
+  \draw[figblue,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (1477,296) -- (1306,291);
+\end{tikzpicture}

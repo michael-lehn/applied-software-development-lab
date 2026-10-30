@@ -1,0 +1,38 @@
+% Similar triangles used to compute the impact point (Lab Handout 7, Step 5).
+% Coordinates in pixels of the original 1302 x 848 sketch.
+\begin{tikzpicture}[x=0.2047bp,y=-0.2047bp,
+    font=\fontsize{6.5bp}{7.8bp}\selectfont,
+    lbl/.style={anchor=base,inner sep=0,align=center},
+    bar/.style={line width=0.6bp}]
+  \definecolor{figgreen}{HTML}{017101}
+  \definecolor{figred}{HTML}{B51700}
+  \definecolor{figline}{HTML}{0076BA}
+  \definecolor{figtri}{HTML}{E9B6B0}
+  \definecolor{figgray}{HTML}{5E5E5E}
+  \useasboundingbox (0,0) rectangle (1302,848);
+  \fill[figtri] (246,149) -- (246,386) -- (483,386) -- cycle;
+  \draw[line width=0.6bp] (246,149) -- (246,625) -- (722,625) -- cycle;
+  \draw[figline,line width=0.5bp] (200,386) -- (770,386);
+  \fill[figgreen] (246,149) circle[radius=6];
+  \fill[figred] (483,386) circle[radius=6];
+  \fill[figgray] (722,625) circle[radius=6];
+  % dimension bars
+  \draw[bar] (88,151) -- (88,624) (80,151) -- (96,151) (80,624) -- (96,624);
+  \draw[bar,figred] (166,151) -- (166,386) (158,151) -- (174,151) (158,386) -- (174,386);
+  \draw[bar,figred] (247,705) -- (483,705) (247,697) -- (247,713) (483,697) -- (483,713);
+  \draw[bar] (247,785) -- (720,785) (247,777) -- (247,793) (720,777) -- (720,793);
+  \node[anchor=base,inner sep=0,rotate=90] at (66,388) {dy = new\_y -- self.y};
+  \node[anchor=base,inner sep=0,rotate=90,text=figred] at (142,268) {Dy};
+  \node[lbl,text=figred] at (365,745) {Dx};
+  \node[lbl] at (486,826) {dx = new\_x -- self.x};
+  % labels
+  \node[lbl,text=figgreen] at (257,50) {Old position};
+  \node[lbl,text=figgreen] at (257,93) {(self.x, self.y)};
+  \node[lbl,text=figred] at (772,160) {``Impact point''};
+  \node[lbl,text=figred] at (772,205) {(px, Paddle.y) $=$ (Paddle.x $+$ Dx, Paddle.y)};
+  \draw[figred,line width=0.5bp,-{Stealth[length=3bp,width=2.4bp]}] (516,236) -- (490,370);
+  \node[lbl,text=figline] at (987,357) {Line through the top edge of the paddle};
+  \node[lbl,text=figline] at (987,398) {$y$ $=$ Paddle.y};
+  \node[lbl,text=figgray] at (900,614) {Without reflection};
+  \node[lbl,text=figgray] at (900,658) {(new\_x, new\_y)};
+\end{tikzpicture}

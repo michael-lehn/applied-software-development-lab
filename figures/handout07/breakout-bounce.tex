@@ -1,0 +1,55 @@
+% Breakout-style direction after hitting the paddle (Lab Handout 7, Step 6).
+% Coordinates in pixels of the original 2000 x 854 sketch.
+\begin{tikzpicture}[x=0.2149bp,y=-0.2149bp,
+    font=\fontsize{7.2bp}{8.6bp}\selectfont,
+    lbl/.style={anchor=base,inner sep=0,align=center},
+    dir/.style={line width=2bp,-{Triangle[length=8bp,width=7bp]}},
+    tl/.style={anchor=base,fill=figtbg,inner xsep=0.6bp,inner ysep=1.2bp,
+      font=\fontsize{5.6bp}{7bp}\selectfont}]
+  \definecolor{figblue}{HTML}{004D80}
+  \definecolor{figred}{HTML}{B51700}
+  \definecolor{figcenter}{HTML}{ED230D}
+  \definecolor{figgreen}{HTML}{017101}
+  \definecolor{figmag}{HTML}{991A60}
+  \definecolor{figgray}{HTML}{5E5E5E}
+  \definecolor{figpaddle}{HTML}{A0C9FF}
+  \definecolor{figtbg}{HTML}{D5D5D5}
+  \useasboundingbox (0,0) rectangle (2000,854);
+  \fill[figpaddle] (572,517) rectangle (1342,641);
+  \draw[line width=0.5bp] (572,517) -- (1342,517);
+  \draw[dir,figmag] (572,517) -- (290,350);
+  \draw[dir,figgreen] (765,517) -- (600,228);
+  \draw[dir,figgray] (957,517) -- (957,183);
+  \draw[dir,figgreen] (1150,517) -- (1316,228);
+  \draw[dir,figmag] (1342,517) -- (1632,350);
+  \foreach \p in {(572,517),(1342,517)} \fill[figblue] \p +(-6,-6) rectangle +(6,6);
+  \fill[figcenter] (957,517) +(-6,-6) rectangle +(6,6);
+  % parameter values
+  \node[tl,text=figmag] at (571,590) {$t=-1$};
+  \node[tl,text=figgreen] at (773,590) {$t=-0.5$};
+  \node[tl,text=figgray] at (957,590) {$t=0$};
+  \node[tl,text=figgreen] at (1150,590) {$t=0.5$};
+  \node[tl,text=figred] at (1332,590) {$t=1$};
+  % directions
+  \node[lbl,text=figgray] at (957,110) {Direction after reflection};
+  \node[lbl,text=figgray] at (957,150) {``straight up''};
+  \node[lbl,text=figgreen] at (546,155) {Direction after reflection};
+  \node[lbl,text=figgreen] at (546,195) {``30 degrees to the left''};
+  \node[lbl,text=figgreen] at (1367,155) {Direction after reflection};
+  \node[lbl,text=figgreen] at (1367,195) {``30 degrees to the right''};
+  \node[lbl,text=figmag] at (233,283) {Direction after reflection};
+  \node[lbl,text=figmag] at (233,325) {``60 degrees to the left''};
+  \node[lbl,text=figmag] at (1710,283) {Direction after reflection};
+  \node[lbl,text=figmag] at (1710,325) {``60 degrees to the right''};
+  % paddle edges
+  \node[lbl,text=figblue] at (290,630) {``Left paddle edge''};
+  \node[lbl,text=figblue] at (290,676) {(Paddle.x, Paddle.y)};
+  \draw[figblue,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (405,597) -- (555,522);
+  \node[lbl,text=figblue] at (1670,590) {``Right paddle edge''};
+  \node[lbl,text=figblue] at (1670,637) {(Paddle.x + Paddle.width, Paddle.y)};
+  \draw[figblue,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (1468,597) -- (1350,520);
+  \draw[figcenter,line width=0.45bp,-{Stealth[length=3bp,width=2.4bp]}] (957,655) -- (957,535);
+  \node[lbl,text=figcenter] at (957,715) {``Center of the paddle edge''};
+  \node[lbl,text=figcenter] at (957,785)
+    {$\left(\text{Paddle.x} + \dfrac{\text{Paddle.width}}{2}, \text{Paddle.y}\right)$};
+\end{tikzpicture}

@@ -1,0 +1,53 @@
+% Reflection of the ball at the left and right walls (Lab Handout 7, Step 4).
+% Coordinates in pixels of the original 2000 x 888 sketch.
+\begin{tikzpicture}[x=0.24095bp,y=-0.24095bp,
+    font=\fontsize{6.2bp}{7.4bp}\selectfont,
+    lbl/.style={anchor=base,inner sep=0,align=center},
+    crd/.style={anchor=base,inner sep=0,font=\fontsize{6.6bp}{7.4bp}\figserif},
+    vel/.style={line width=1.7bp,-{Triangle[length=9.5bp,width=8bp]}}]
+  \definecolor{figball}{HTML}{F9BA00}
+  \definecolor{fignew}{HTML}{FBDFA1}
+  \definecolor{fignewgray}{HTML}{EFD294}
+  \definecolor{figblue}{HTML}{004D80}
+  \definecolor{figred}{HTML}{B51700}
+  \useasboundingbox (0,0) rectangle (2000,888);
+  % playing field
+  \fill[black!9] (310,68) rectangle (1583,776);
+  \draw[line width=0.5bp,-{Stealth[length=4.5bp,width=3.5bp]}] (310,68) -- (1655,68);
+  \draw[line width=0.5bp,-{Stealth[length=4.5bp,width=3.5bp]}] (310,68) -- (310,810);
+  \foreach \p in {(310,68),(1582,68),(1582,776)}
+    \fill \p +(-5,-5) rectangle +(5,5);
+  \node[crd] at (276,52) {(0,0)};
+  \node[crd] at (1580,40) {(800,0)};
+  \node[crd,anchor=base west] at (1678,80) {\itshape x\upshape-axis};
+  \node[crd] at (243,783) {(0,600)};
+  \node[crd] at (300,856) {\itshape y\upshape-axis};
+  \node[crd] at (1610,830) {(800,600)};
+  % balls
+  \fill[figball] (467,210) circle[radius=65];
+  \fill[figball] (1438,215) circle[radius=65];
+  \fill[fignew] (196,440) circle[radius=65];
+  \fill[fignewgray] (423,440) circle[radius=65];
+  \fill[fignewgray] (1475,440) circle[radius=65];
+  \fill[fignew] (1711,445) circle[radius=65];
+  \foreach \p in {(467,210),(1438,215),(196,440),(423,440),(1475,440),(1711,445)}
+    \fill \p circle[radius=11];
+  % motion vectors
+  \draw[vel,figblue] (467,210) -- (196,440);
+  \draw[vel,figred] (310,342) -- (423,440);
+  \draw[vel,figblue] (1438,215) -- (1711,445);
+  \draw[vel,figred] (1583,342) -- (1475,440);
+  % labels
+  \node[lbl] at (467,101) {Old position};
+  \node[lbl] at (467,137) {(self.x, self.y)};
+  \node[lbl] at (1438,101) {Old position};
+  \node[lbl] at (1438,137) {(self.x, self.y)};
+  \node[lbl] at (164,556) {Without reflection};
+  \node[lbl] at (164,591) {(new\_x, new\_y)};
+  \node[lbl] at (466,556) {After reflection};
+  \node[lbl] at (466,591) {($-$new\_x, new\_y)};
+  \node[lbl] at (1390,556) {After reflection};
+  \node[lbl] at (1390,591) {({\figserif 2\,$\cdot$\,800} $-$ new\_x, new\_y)};
+  \node[lbl] at (1750,556) {Without reflection};
+  \node[lbl] at (1750,591) {(new\_x, new\_y)};
+\end{tikzpicture}

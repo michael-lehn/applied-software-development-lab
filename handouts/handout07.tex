@@ -1,0 +1,1238 @@
+% Applied Software Development Lab -- Lab Handout 7: At the end, we shoot and clean up
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 7".
+\documentclass{aslab}
+\usepackage{unicode-math}
+\setmathfont{texgyretermes-math.otf}[Scale=1.2]
+\newfontfamily\figserif{TeX Gyre Termes}
+\sethandout{7}{\texorpdfstring{At the end, we shoot \emoji{1F603}\
+  {\fontsize{8bp}{9bp}\selectfont and clean up \emoji{1F629}}}%
+  {At the end, we shoot and clean up}}
+\graphicspath{{../figures/handout07/}}
+
+%% Python listings with the color scheme of the original
+%% inline code in bold lines (the original keeps it in regular weight)
+\newcommand*\codemd[1]{{\mdseries\codearg{#1}}}
+\newcommand*\cy[1]{\textcolor{codecyan}{#1}}
+\makeatletter
+\newcommand*\regionpitch{\baselineskip=\aslab@pitch\relax}
+\makeatother
+\lstdefinestyle{py}{style=aslab,sensitive=true,escapechar=|,
+  basicstyle=\ttfamily\regionpitch,
+  morekeywords=[1]{class,def,if,elif,else,for,while,or,and,in,return,not},
+  keywordstyle=[1]\color{codeorange},
+  morekeywords=[2]{import,from},keywordstyle=[2]\color{codemagenta},
+  morekeywords=[3]{None,True,False,range,len},keywordstyle=[3]\color{codecyan},
+  morecomment=[l]\#,commentstyle=\color{codepurple},
+  alsoletter={0123456789},emphstyle=\color{codered},
+  emph={0,1,2,3,4,5,6,7,8,9,01,10,20,30,80,100,105,165,200,223,255,300,400,
+    570,600,800}}
+%% numbered listing (11bp): "nnn code" with the numbers in orange
+\lstdefinestyle{pyn}{style=py,numbers=left,
+  numberstyle=\ttfamily\color{codeorange},numbersep=6.6bp,xleftmargin=26.4bp}
+%% numbered listing (10bp)
+\lstdefinestyle{pynsmall}{style=py,numbers=left,
+  basicstyle=\fontsize{10bp}{11bp}\selectfont\ttfamily\regionpitch,
+  numberstyle=\fontsize{10bp}{11bp}\selectfont\ttfamily\color{codeorange},
+  numbersep=6bp,xleftmargin=24bp}
+\lstdefinestyle{pysmall}{style=py,
+  basicstyle=\fontsize{10bp}{11bp}\selectfont\ttfamily}
+
+%% lists of this handout
+\newlist{ntasks}{enumerate}{1}
+\setlist[ntasks]{label={\arabic*.},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+\newlist{alist}{enumerate}{1}
+\setlist[alist]{label={(\Alph*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+\newlist{dotlist}{itemize}{1}
+\setlist[dotlist]{label={\textbullet},leftmargin=9bp,labelsep=*,align=left,
+  labelindent=0pt}
+\newcommand*\bl[1]{\textcolor{aslabblue}{#1}}
+\lineskiplimit=-\maxdimen
+\normallineskiplimit=-\maxdimen
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{130.5}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=13]{145.0}
+{\color{aslabblue}\bfseries
+\begin{dashlist}
+\item Deepening object-oriented programming
+\item Refactoring existing programs
+\item Incremental software development: small changes, testing, and versioning
+\end{dashlist}\par}
+\end{region}
+
+\begin{region}{198.0}
+\heading{Step 1: Cloning your own repository}
+\end{region}
+
+\begin{region}[pitch=13.87]{225.6}
+Today we are working ``only'' with Python again. The goal is to further
+improve the existing code (keyword: \emph{refactoring}) and then to extend its
+functionality.\\
+Before we start making changes, please take another look at the current
+state of the game.
+\end{region}
+
+\begin{region}{295.7}
+\textbf{As always:} Open two terminals -- one for editing (left), one for
+running commands (right).
+\end{region}
+
+\begin{region}[pitch=13.3]{322.0}
+\subheading{Left terminal (editing)}
+Clone the repository and change into the working directory:
+\end{region}
+
+\begin{region}[pitch=13.2]{363.0}
+\code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}\\
+\code{cd asp-ulm/python}
+\end{region}
+
+\begin{region}{403.3}
+\subheading{Task 1:}
+\end{region}
+
+\begin{region}[pitch=13.3]{431.1}
+Open the file \code{breakout.py} in your editor and examine the structure of
+the program.\\
+Focus on the following points:
+\end{region}
+
+\begin{region}[pitch=13.35]{457.0}
+\begin{dashlist}
+\item As a group, go through the flow of the program together, in particular
+  the main loop at the end of the file.
+\item Get an overview of the existing classes and their responsibilities.
+\item Look specifically for global variables (e.g., \code{screen},
+  \code{width}, \code{height}, \code{balls}, \code{running}) and determine
+  where they are used or modified.
+\item Distinguish which classes are instantiated (\code{Ball}) and which are
+  only used as a class object with static attributes and methods
+  (\code{Paddle}).
+\item In doing so, recap the role of \code{__init__} and \code{self} in
+  classes with instances.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.2]{577.4}
+Talk to each other until everyone has understood the basic structure. This
+preparation is important for the refactoring in the next step.
+\end{region}
+
+\begin{region}[pitch=13.3]{619.0}
+\subheading{Right terminal (running commands)}
+Change into the Python directory here as well:
+\end{region}
+
+\begin{region}{658.9}
+\code{cd asp-ulm/python}
+\end{region}
+
+\begin{region}{686.0}
+\subheading{Task 2}
+\end{region}
+
+\begin{region}{712.7}
+Run the game with the command \code{python breakout.py}.
+\end{region}
+
+\begin{region}[pitch=13.65]{739.1}
+Compare the observed behavior with what you found out about the code in
+Task~1. If there are any discrepancies or open questions, discuss them with us
+before you continue.
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Step 2: Refactoring}
+\end{region}
+
+\begin{region}[pitch=13.3]{97.0}
+The previous global variables are moved into a separate class Game. This
+class goes into a new file \code{game.py}. From now on, all other classes are
+also each moved into a file of their own, so that each file contains exactly
+one piece of functionality and the code remains easy to follow.
+\end{region}
+
+\begin{region}{164.2}
+\subheading{The goal is:}
+\end{region}
+
+\begin{region}[pitch=13.8]{177.0}
+\begin{dashlist}
+\item better structure
+\item fewer global variables \textbf{outside of classes}
+\item preparation for further object-oriented steps
+\end{dashlist}
+In the end, the file \code{breakout.py} should contain little more than the
+main loop.
+\end{region}
+
+\begin{region}[pitch=13.6]{245.7}
+\subheading{Task 1}
+Create the file \code{game.py} with the following content:
+\end{region}
+
+\begin{region}[pitch=11]{285.2}
+\begin{lstlisting}[style=pynsmall]
+import pygame
+
+class |\cy{Game}|:
+    width, height = None, None
+    screen = None
+
+    def |\cy{init}|():
+        Game.width, Game.height = 800, 600
+        pygame.init()
+        Game.screen = pygame.display.set_mode((Game.width, Game.height))
+
+    def |\cy{quit}|():
+        pygame.quit()
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.6]{456.0}
+\textbf{Task 2: \codemd{ball.py} (reference for the file at the end of the
+task)}\\
+Create a new file \code{ball.py} by copying: \code{cp breakout.py ball.py}
+\end{region}
+
+\begin{region}{497.4}
+Edit the new file \code{ball.py} as follows:
+\end{region}
+
+\begin{region}[pitch=13.55]{510.3}
+\begin{dashlist}
+\item Delete everything except the class \code{Ball}.\\
+  Tip for \textbf{nano}: Hold down the \textbf{Shift key} and use the arrow
+  keys to select text.\\
+  Press \textbf{Control+K} to delete the selected text.
+\item Add the necessary \code{import} lines at the beginning:
+\begin{lstlisting}[style=pyn]
+from game import Game
+import pygame
+\end{lstlisting}
+  Note:\\
+  With \code{from game import Game}, the class Game is imported directly from
+  the module \code{game.py}. This means you can simply write
+  \code{Game.width} or \code{Game.screen} in the code.\\
+  If you used \code{import game} instead, you would have to include the module
+  name every time, e.g., \code{game.Game.width}.\\
+  Both variants are correct -- but here we choose
+  \code{from ... import ...} to keep the code easier to read.
+\item Adjust how global variables are accessed: instead of \code{width},
+  \code{height}, or \code{screen}, you now use \code{Game.width},
+  \code{Game.height}, \code{Game.screen}.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\textbf{Reference: \codemd{ball.py}}
+\end{region}
+
+\begin{region}{97.3}
+\begin{lstlisting}[style=pyn]
+from game import Game
+import pygame
+
+class |\cy{Ball}|:
+    def |\cy{\_\_init\_\_}|(self, x, y, vx, vy):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.c = (255, 255, 0)
+
+    def |\cy{move}|(self):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x < 0 or self.x > Game.width:
+            self.vx *= -1
+        if self.y < 0 or self.y > Game.height:
+            self.vy *= -1
+
+    def |\cy{draw}|(self, surface):
+        pygame.draw.circle(surface, self.c, (self.x, self.y), 5)
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.3]{363.2}
+\textbf{Task 2: \codemd{paddle.py}}\\
+Move the class Paddle into a separate file \code{paddle.py} -- analogous to
+\code{ball.py}.\\
+Make sure that here, too, global variables are accessed via the class Game.\\
+The position is now no longer initialized directly in the definition, but by
+calling \code{Paddle.init()}.
+\end{region}
+
+\begin{region}{444.0}
+\textbf{Reference: \codemd{paddle.py}}
+\end{region}
+
+\begin{region}{470.7}
+\begin{lstlisting}[style=pyn]
+from game import Game
+import pygame
+
+class |\cy{Paddle}|:
+    c = (0, 0, 255)
+    w, h = 100, 30
+    x, y = None, None
+
+    def |\cy{init}|():
+        Paddle.x, Paddle.y = (Game.width - Paddle.w) // 2, 570
+
+    def |\cy{left}|():
+        Paddle.x -= 10
+        if Paddle.x < 0:
+            Paddle.x = 0
+
+    def |\cy{right}|():
+        Paddle.x += 10
+        if Paddle.x + Paddle.w > Game.width:
+            Paddle.x = Game.width - Paddle.w
+
+    def |\cy{draw}|(surface):
+        pygame.draw.rect(surface, Paddle.c,
+                         (Paddle.x, Paddle.y, Paddle.w, Paddle.h))
+\end{lstlisting}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}[pitch=13.45]{69.4}
+\subheading{Task 3}
+Clean up the file \code{breakout.py} so that it contains only the game flow
+in the main loop. Import the required classes from the files \code{game.py},
+\code{ball.py}, and \code{paddle.py}. Again, adjust the access to global
+variables. At the beginning, initialize the game with \code{Game.init()} and
+then call \code{Paddle.init()}.
+\end{region}
+
+\begin{region}{150.6}
+\textbf{Reference: \codemd{breakout.py}}
+\end{region}
+
+\begin{region}{164.2}
+\begin{lstlisting}[style=pyn]
+from game import Game
+from ball import Ball
+from paddle import Paddle
+import time
+import pygame
+
+Game.init()
+Paddle.init()
+
+running = True
+balls = [Ball(400, 300, -1, 2), Ball(200, 10, 4, 2)]
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                running = False
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_a]:
+        balls.append(Ball(400, 300, -1, 2))
+    if keys[pygame.K_LEFT]:
+       Paddle.left()
+    if keys[pygame.K_RIGHT]:
+       Paddle.right()
+
+    pygame.Surface.fill(Game.screen, (0, 0, 0))
+    for i in range(0,len(balls)):
+        balls[i].draw(Game.screen)
+        balls[i].move()
+    Paddle.draw(Game.screen)
+    pygame.display.flip()
+    time.sleep(1/30)
+
+Game.quit()
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.37]{598.0}
+\subheading{Task 4: Functional test, git commit, and push}
+Start the game as usual with \code{python breakout.py}. Check whether the game
+works as before. To do so, move the paddle all the way to the left and all the
+way to the right at least once. This runs through all relevant conditions in
+\code{Paddle.left()} and \code{Paddle.right()}. If, for example, you forgot to
+replace \code{width} with \code{Game.width} during refactoring, you will
+notice it now at the latest. Of course, this test is not complete -- but it
+covers typical errors that can occur during restructuring.
+\end{region}
+
+\begin{region}[pitch=13.2]{704.5}
+If the game works as expected, add the new files to the repository and make a
+commit:\\
+\code{git add ball.py paddle.py game.py}\\
+\code{git commit -a -m "one file does one thing"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\heading{Step 3: Simplifying interfaces}
+\end{region}
+
+\begin{region}{97.3}
+The method \code{draw} of the class \code{Ball} (in \code{ball.py}) currently
+looks like this:
+\end{region}
+
+\begin{region}{124.0}
+\begin{lstlisting}[style=py]
+# ...
+\end{lstlisting}
+\end{region}
+
+\begin{region}{137.2}
+\begin{lstlisting}[style=py]
+class |\cy{Ball}|:
+    # ...
+
+    def |\cy{draw}|(self, surface):
+        pygame.draw.circle(surface, self.c, (self.x, self.y), 5)
+\end{lstlisting}
+\end{region}
+
+\begin{region}{210.3}
+It is called in only one place -- in the main loop of \code{breakout.py}:
+\end{region}
+
+\begin{region}{237.0}
+\begin{lstlisting}[style=py]
+    balls[i].draw(Game.screen)
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.5]{264.4}
+So drawing always happens on \code{Game.screen}. That makes sense -- we have
+exactly one \textbf{game} and one \textbf{drawing surface}.\\
+Passing the drawing surface is therefore redundant and makes the code
+needlessly general.\\
+Our code will become complex soon enough. So: out with everything that is not
+needed yet.
+\end{region}
+
+\begin{region}{345.6}
+\subheading{Task:}
+\end{region}
+
+\begin{region}[pitch=13.3]{372.4}
+\begin{ntasks}
+\item Simplify the method \code{draw} in the class \code{Ball} as follows:
+\begin{lstlisting}[style=py]
+# ...
+class |\cy{Ball}|:
+  # ...
+
+   def |\cy{draw}|(self):
+        pygame.draw.circle(Game.screen, self.c, (self.x, self.y), 5)
+\end{lstlisting}
+  \blank
+  Make sure that you now use Game.screen directly in the method draw.\\
+  Also adjust the call in \code{breakout.py} accordingly:
+  \code{balls[i].draw()}
+\end{ntasks}
+\end{region}
+
+\begin{region}[pitch=13.53]{505.6}
+\begin{ntasks}[start=2]
+\item \textbf{Transfer task:}\\
+  The method \code{draw} of the class Paddle has the same unnecessary
+  flexibility.\\
+  Adjust it in the same way so that it uses \code{Game.screen} directly --
+  and can then simply be called in \code{breakout.py} with
+  \code{Paddle.draw()}.
+\end{ntasks}
+\end{region}
+
+\begin{region}[pitch=13.45]{559.5}
+\begin{ntasks}[start=3]
+\item If everything works as expected, commit your changes:\\
+  \code{git commit -a -m "simplified draw methods"}\\
+  \code{git push}
+\end{ntasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\heading{Step 4: Reflecting the ball off the walls}
+\end{region}
+
+\begin{region}[pitch=14.2]{97.0}
+It is high time to show a sketch of our playing field with coordinates:\\
+As you may have already noticed (or are noticing now), the origin is at the
+\textbf{top left}, and the \textbf{y-axis points downward} -- as is customary
+in Pygame.
+\end{region}
+
+\begin{region}[pitch=13.2]{151.9}
+The following sketch shows two balls, each moving toward a wall. Without
+reflection, they would pass through the wall in the next frame. The reflection
+prevents this -- by reversing the direction of motion along the respective
+axis.
+\end{region}
+
+\begin{region}{205.5}
+\subheading{The sketch shows:}
+\end{region}
+
+\begin{region}[pitch=13.47]{218.5}
+\begin{dashlist}
+\item the current center of the ball at \code{(self.x, self.y)}
+\item the new, unreflected position \code{(new_x, new_y)}
+\item the corresponding velocity vector \code{(vx, vy)}
+\item the impact on the left or right wall and the corresponding reflection
+\end{dashlist}
+\end{region}
+
+\placefigure{68.7}{263.2}{481.9}{wall-reflection.tex}
+
+\begin{region}{490.8}
+Adapt the \code{move} method in the class \code{Ball} (in \code{ball.py}) as
+follows:
+\end{region}
+
+\begin{region}{517.4}
+\begin{lstlisting}[style=pyn,firstnumber=13]
+    def |\cy{move}|(self):
+\end{lstlisting}
+\end{region}
+
+\begin{region}{530.6}
+\begin{lstlisting}[style=pyn,firstnumber=14]
+        new_x = self.x + self.vx
+        new_y = self.y + self.vy
+
+        if new_x < 0:
+            new_x = -new_x
+            self.vx = -self.vx
+        if new_x > Game.width:
+            new_x = 2 * Game.width - new_x
+            self.vx = -self.vx
+        if new_y < 0:
+
+            self.vy = -self.vy
+        if new_y > Game.height:
+
+            self.vy = -self.vy
+
+        self.x = new_x
+        self.y = new_y
+\end{lstlisting}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}{83.7}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{111.6}
+\begin{ntasks}
+\item Start the game with \code{python breakout.py} and observe how the
+  reflection of the ball at the left and right walls has changed.
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.15]{151.2}
+You should see that the ball (more precisely: its center) is reflected
+realistically. Even at high speed, it always stays \textbf{inside the drawing
+surface} -- provided we regard the ball as a \textbf{point mass}. The ball
+itself can therefore stick halfway into the wall.
+\end{region}
+
+\begin{region}[x=74.7,right=0]{207.0}
+\textbf{How do you arrive at the code for the reflection?}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.1]{223.6}
+\begin{alist}
+\item If \code{new_x < 0}, the ball has penetrated the left wall by
+  \bl{$-$new\_x}. With a reflection, the new x-coordinate lies symmetrically
+  to \bl{$0$} at \bl{$-$new\_x}.
+\end{alist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.6]{257.8}
+\begin{alist}[start=2]
+\item If \code{new_x > Game.width}, the ball has moved beyond the right edge
+  in the x-direction by \bl{new\_x $-$ Game.width}. The reflected
+  x-coordinate lies symmetrically to \bl{Game.width} at\\
+  \bl{Game.width $-$ (new\_x $-$ Game.width) $=$ $2\cdot{}$Game.width $-$
+  new\_x}
+\end{alist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{316.1}
+\textbf{Note on how to improve the reflection (optional):}\\
+If you want to be really precise, the ball would have to bounce off at
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{343.5}
+\begin{ntasks}[start=3]
+\item \code{x = 5} \textbf{(left wall)}
+\item \code{x = Game.width - 5} \textbf{(right wall)}
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{371.1}
+(assuming that the radius of the ball is 5).
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.2]{398.4}
+You should also observe that the ball can still \textbf{leave the screen at
+the top and bottom} -- we will fix that next.
+\end{region}
+
+\begin{region}[pitch=13.8]{440.1}
+\begin{ntasks}[start=2]
+\item \textbf{Transfer task: Reflection at the floor and ceiling}\\
+  Adjust the code in \textbf{line 24} and \textbf{line 27} so that the ball is
+  also reflected realistically at the top and bottom -- analogous to the side
+  walls.
+\end{ntasks}
+\end{region}
+
+\begin{region}[pitch=13.37]{494.0}
+\begin{ntasks}[start=3]
+\item If the game works correctly and the ball now also reflects off the
+  ceiling and floor, commit your changes:\\
+  \code{git commit -a -m "better reflection"}\\
+  \code{git push}
+\end{ntasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\heading{Step 5: Reflecting the ball off the paddle}
+\end{region}
+
+\begin{region}[pitch=13.67]{97.0}
+The following sketch shows two situations in which a ball can hit the
+paddle.\\
+For each ball, the sketch shows its current position \code{(self.x, self.y)}
+and the new position \code{(new_x,new_y)} calculated for the case that the ball \textbf{keeps flying
+unhindered} -- that is, \textbf{without collision}, as is still the case in
+the current code:
+\end{region}
+
+\begin{region}[pitch=14.5]{151.2}
+\begin{dashlist}
+\item The ball on the \textbf{left} is initially located to the left of the
+  paddle. Its motion vector crosses the top edge of the paddle, and the new
+  position lies \textbf{below the edge and inside the paddle}.
+\item The ball on the \textbf{right} is initially located \textbf{above} the
+  paddle. Its new position lies \textbf{to the right of the paddle}, but also
+  \textbf{below the top edge}.
+\end{dashlist}
+\end{region}
+
+\placefigure{56.7}{213.2}{450.8}{paddle-impact.tex}
+
+\begin{region}[pitch=14.2]{346.7}
+In both cases: \textbf{the motion vector intersects the top edge of the
+paddle}. The reflection should take place at this \textbf{impact point}.
+\end{region}
+
+\begin{region}[pitch=13.2]{387.4}
+To calculate this intersection point as simply and generally as possible, let
+us look at the following sketch:
+\end{region}
+
+\placefigure{56.7}{417.6}{266.5}{similar-triangles.tex}
+
+\begin{region}[pitch=13.6]{618.5}
+In the sketch you can see two similar triangles -- an ideal case for the
+\textbf{good old intercept theorem}. It is simple, intuitive, and leads
+directly to the solution -- and yet it is often forgotten at university or
+replaced by needlessly complicated calculations. This shows how helpful solid
+school geometry can be in programming, too.
+\end{region}
+
+\begin{region}[pitch=13.25]{686.6}
+Our goal: we want to calculate the \textbf{x-coordinate of the impact point}
+-- that is, the point at which the motion vector of the ball intersects the
+top edge of the paddle. To do this, we set up the ratios of corresponding
+sides of the two triangles:
+\end{region}
+
+\begin{region}[x=147.6,width=390]{747.5}
+$\dfrac{\text{Dx}}{\text{Dy}} = \dfrac{\text{dx}}{\text{dy}}$\ \ with\ \
+$\text{dx} = \text{new\_x - self.x}$\ \ and\ \
+$\text{dy} = \text{new\_y - self.y}$
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}{81.7}
+The vertical distance to the paddle edge is:
+\end{region}
+
+\begin{region}{111.3}
+\centering $\text{Dy} = \text{Paddle.y} - \text{self.y}$
+\end{region}
+
+\begin{region}{138.3}
+Then the horizontal component can be calculated with:
+\end{region}
+
+\begin{region}{172.7}
+\centering $\text{Dx} = \dfrac{\text{dx}}{\text{dy}}\text{Dy}$
+\end{region}
+
+\begin{region}{197.1}
+Finally, the x-coordinate of the impact point is:
+\end{region}
+
+\begin{region}{226.7}
+\centering $\text{px} = \text{self.x} + \text{Dx}$
+\end{region}
+
+\begin{region}{254.6}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.75]{282.1}
+\begin{ntasks}
+\item The following code fragment checks whether the ball crosses the
+  \textbf{line through the top edge of the paddle}. If so, the
+  \textbf{intersection point} with this edge is to be calculated (you fill in
+  this gap in the code yourself). Then it checks whether the intersection
+  point lies within the \textbf{horizontal extent of the paddle}. If so, the
+  ball is reflected by reversing its vertical velocity.
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{363.7}
+\begin{lstlisting}[style=py]
+if self.y < Paddle.y and new_y >= Paddle.y:
+    # Calculate px in this gap
+    if px >= Paddle.x and px <= Paddle.x + Paddle.w:
+        new_y = Paddle.y + Dy - dy
+        self.vy = -self.vy
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{443.9}
+\textbf{Transfer task:} Think about where in the code this fragment should be
+inserted so that the ball is reflected when it hits the paddle.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.25]{484.5}
+\textbf{Note for the style-conscious:} Use \textbf{integer division}
+(\code{//}) wherever it makes sense. Even if it does not matter in this small
+game -- deep down, every HPC programmer's heart aches a little at unnecessary
+floating-point division.
+\end{region}
+
+\begin{region}[pitch=13.45]{537.3}
+\begin{ntasks}[start=2]
+\item If the ball now reflects off the paddle as intended, commit your
+  changes:\\
+  \code{git commit -a -m "paddle does what it should"}\\
+  \code{git push}
+\end{ntasks}
+\end{region}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{69.4}
+\heading{Step 6: Breakout-style bouncing off the paddle}
+\end{region}
+
+\begin{region}[pitch=13.8]{96.9}
+In classic Breakout games, the ball is \textbf{not simply reflected} when it
+hits the paddle. Instead, its new direction of motion depends on \textbf{where
+on the paddle} the ball hits.
+\end{region}
+
+\begin{region}{150.8}
+A simple model:
+\end{region}
+
+\begin{region}[pitch=14.3]{177.1}
+\begin{dashlist}
+\item If the ball hits the paddle \textbf{exactly in the middle}, it flies
+  \textbf{straight up}.
+\item If it hits the \textbf{left edge}, it flies \textbf{up and to the
+  left}.
+\item If it hits the \textbf{right edge}, it flies \textbf{up and to the
+  right}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.2]{234.1}
+The ball should keep its previous \textbf{speed (magnitude)}. Only the
+\textbf{direction} changes -- and it does so \textbf{linearly depending on the
+impact point}.
+\end{region}
+
+\begin{region}{274.8}
+The following sketch illustrates this idea:
+\end{region}
+
+\placefigure{56.7}{278.7}{429.8}{breakout-bounce.tex}
+
+\begin{region}{478.8}
+We describe the \textbf{impact point} on the paddle by a parameter
+$t\in[-1,1]$ such that:
+\end{region}
+
+\begin{region}[pitch=17.15]{495.9}
+\begin{dashlist}
+\item $t=-1$: ``far left'',
+\item $t=0$: ``exactly in the middle'',
+\item $t=1$: ``far right''.
+\end{dashlist}
+\end{region}
+
+\begin{region}{544.2}
+To do so, we parametrize the x-coordinate of the impact point \code{px} by
+\end{region}
+
+\begin{region}{565.5}
+\centering $\text{px} = \text{Paddle.x} + \dfrac{\text{Paddle.w}}{2}\cdot(1+t)
+  \quad\text{with}\quad t\in[-1,1]$
+\end{region}
+
+\begin{region}{587.7}
+Solving for \code{t} yields:
+\end{region}
+
+\begin{region}{610.1}
+\centering $t = (\text{px} - \text{Paddle.x})\cdot\dfrac{2}{\text{Paddle.w}}-1$
+\end{region}
+
+\begin{region}[pitch=13.8]{635.4}
+Now we can map the parameter $t\in[-1,1]$ to an angle $\varphi$ in
+\textbf{radians}. A few annoying details have to be taken into account -- for
+example, that in our coordinate system the \textbf{y-axis points downward}.
+The following formula already takes this into account correctly:
+\end{region}
+
+\begin{region}{700.5}
+\centering $\varphi = \left(\dfrac{t}{3}-1\right)\cdot\dfrac{\pi}{2}\ \in
+  \left[-\dfrac{4\pi}{6}, -\dfrac{2\pi}{6}\right].$
+\end{region}
+
+\begin{region}{725.7}
+This means:
+\end{region}
+
+\begin{region}[pitch=17.15]{742.2}
+\begin{dashlist}
+\item $t=-1$ gives an angle of \textbf{60° up to the left.}
+\item $t=1$ gives \textbf{60° up to the right.}
+\item $t=0$ gives \textbf{straight up.}
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ==================================================================== 11 ==
+\begin{region}{81.7}
+The magnitude of the velocity is preserved:
+\end{region}
+
+\begin{region}{103.3}
+\centering $v = \sqrt{\text{self.vx}^2 + \text{self.vy}^2}$
+\end{region}
+
+\begin{region}{122.8}
+The new velocity vector is then given by:
+\end{region}
+
+\begin{region}{139.3}
+\centering $\text{self.vx} = v\cdot\cos\varphi$\quad and\quad
+  $\text{self.vy} = v\cdot\sin\varphi$.
+\end{region}
+
+\begin{region}{180.4}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}{207.9}
+\begin{ntasks}
+\item \textbf{Now let's put the theory into practice again!}
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{234.6}
+For the implementation, we need some mathematical functions provided by the
+module \code{math}. Import the module in \code{ball.py}:
+\end{region}
+
+\begin{region}[x=74.7,right=0]{274.8}
+\begin{lstlisting}[style=py]
+import math
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{301.2}
+What we need from it:
+\end{region}
+
+\begin{region}[x=74.7,right=0]{318.4}
+\begin{dotlist}
+\item \code{math.pi}: the constant $\pi$
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{343.2}
+\begin{dotlist}
+\item \code{math.hypot(x, y)}: computes $\sqrt{x^2+y^2}$
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{361.0}
+\begin{dotlist}
+\item \code{math.cos} and \code{math.sin} compute the cosine and sine of an
+  angle in \textbf{radians}.
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.1]{386.9}
+With these tools, it should not be difficult to complete the following code
+fragment and to place it \textbf{at a suitable point} in the code:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{427.8}
+\begin{lstlisting}[style=py]
+if px >= Paddle.x and px <= Paddle.x + Paddle.w:
+    new_y = Paddle.y + Dy - dy
+    # Calculate t, phi, v, self.vx, self.vy in this gap
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.75]{481.3}
+\textbf{Remark:} Strictly speaking, we first still reflect the ball according
+to the principle ``angle of incidence = angle of reflection'' -- and only then
+change the direction according to the \textbf{Breakout rules}.\\
+This is not entirely clean, but to the human eye it will look exactly as if
+we reflected the ball Breakout-style right away.
+\end{region}
+
+\begin{region}{564.4}
+\begin{ntasks}[start=2]
+\item \textbf{If everything works, then as always: into the repository!}
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{591.2}
+\code{git commit -a -m "implemented Breakout reflection"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ==================================================================== 12 ==
+\begin{region}{69.4}
+\heading{Step 7: Something without theory for a change}
+\end{region}
+
+\begin{region}[pitch=13.5]{97.0}
+Now we simply make the code a little nicer -- without any theory at all.\\
+In \code{breakout.py}, replace this loop:
+\end{region}
+
+\begin{region}[pitch=12.6]{137.1}
+\begin{lstlisting}[style=py]
+    for i in range(0,len(balls)):
+        balls[i].draw()
+        balls[i].move()
+\end{lstlisting}
+\end{region}
+
+\begin{region}{187.3}
+with the more compact and more readable variant:
+\end{region}
+
+\begin{region}[pitch=12.6]{213.8}
+\begin{lstlisting}[style=py]
+    for b in balls:
+        b.draw()
+        b.move()
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.1]{264.0}
+Both variants do exactly the same thing -- but the second one is clearer,
+shorter, and more in line with Python style.
+\end{region}
+
+\begin{region}[pitch=13.6]{304.4}
+\textbf{As always:} Test whether everything still works as expected. Then
+off to the repository with\\
+\code{git commit -a -m "nicer loop"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{371.4}
+\heading{Step 8: Quickly adding a new feature (rockets!)}
+\end{region}
+
+\begin{region}[pitch=13.2]{397.9}
+We have now spent a lot of time cleaning up our code, structuring it more
+nicely, and solving details such as the ball reflection properly. High time
+to check whether all this pays off in practice!
+\end{region}
+
+\begin{region}[pitch=13.25]{451.5}
+Our paddle now gets a new ability: \textbf{firing rockets!}\\
+The rockets should fly upward, i.e., similar to balls, only in the opposite
+direction.\\
+At first, they are even displayed exactly like balls -- we may change that
+later.
+\end{region}
+
+\begin{region}[pitch=13.5]{504.6}
+Create a new file \code{rocket.py}. The easiest way is probably to copy the
+file \code{ball.py} and adapt it: \code{cp ball.py rocket.py}\ \ Then replace
+its content with:
+\end{region}
+
+\begin{region}{544.8}
+\begin{lstlisting}[style=py]
+from game import Game
+\end{lstlisting}
+\end{region}
+
+\begin{region}{558.0}
+\begin{lstlisting}[style=py]
+from paddle import Paddle
+import pygame
+import math
+
+class |\cy{Rocket}|:
+    def |\cy{\_\_init\_\_}|(self, x, y, vy):
+        self.x = x
+        self.y = y
+        self.vy = vy
+        self.c = (255, 255, 255)
+
+    def |\cy{move}|(self):
+        if self.y < 10:
+            return
+        self.y += self.vy
+
+    def |\cy{draw}|(self):
+        pygame.draw.circle(Game.screen, self.c, (self.x, self.y), 5)
+\end{lstlisting}
+\end{region}
+
+\nextpage
+%% ==================================================================== 13 ==
+\begin{region}{83.4}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}{107.8}
+The following changes in \code{breakout.py} are sufficient:
+\end{region}
+
+\begin{region}{132.8}
+\begin{ntasks}
+\item \textbf{Importing the rocket class}
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{157.1}
+At the very top, with the imports (preferably next to the other
+\code{from ... import ...} lines), add:
+\end{region}
+
+\begin{region}[x=74.7,right=0]{194.6}
+\begin{lstlisting}[style=py]
+from rocket import Rocket
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{219.7}
+This lets you write \code{Rocket(...)} directly later on, instead of
+\code{rocket.Rocket(...)}.
+\end{region}
+
+\begin{region}{244.7}
+\begin{ntasks}[start=2]
+\item \textbf{Creating the list of rockets}\\
+  Near the place where the balls are initialized (e.g., directly after it),
+  add:
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{281.0}
+\tcode{rockets = []}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{305.0}
+At first, everything is peaceful -- no rockets on the way yet.
+\end{region}
+
+\begin{region}[pitch=12.3]{330.4}
+\begin{ntasks}[start=3]
+\item \textbf{Catching the arrow key ↑ and creating a rocket}\\
+  Extend the handling of key-press events (where you already check for
+  \code{pygame.KEYDOWN} and \code{event.key == pygame.K_q}) as follows:
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{379.3}
+\begin{lstlisting}[style=py]
+elif event.type == pygame.KEYDOWN:
+    if event.key == pygame.K_q:
+        running = False
+    elif event.key == pygame.K_UP:
+        rockets.append(Rocket(Paddle.x + Paddle.w//2, Paddle.y, -10))
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{451.4}
+The start position is the middle of the paddle, and the velocity is $-10$
+(because our y-axis points downward).
+\end{region}
+
+\begin{region}{488.3}
+\begin{ntasks}[start=4]
+\item \textbf{Moving and drawing the rockets}\\
+  So far, the main loop moves and draws all balls -- now you do the same for
+  the rockets. Directly afterwards:
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{536.6}
+\begin{lstlisting}[style=py]
+for r in rockets:
+    r.draw()
+    r.move()
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{584.9}
+From now on, you can test the feature with \code{python breakout.py}.
+\end{region}
+
+\begin{region}[pitch=12.3]{609.9}
+\begin{ntasks}[start=5]
+\item \textbf{Once all this runs and the rockets fly -- into the repository:}\\
+  \code{git add breakout.py rocket.py}\\
+  \code{git commit -m "added rockets"}\\
+  \code{git push}
+\end{ntasks}
+\end{region}
+
+\nextpage
+%% ==================================================================== 14 ==
+\begin{region}{69.4}
+\heading{Step 9: Finally, we clean up!}
+\end{region}
+
+\begin{region}[pitch=14]{97.0}
+Our rockets stick to the ceiling -- and on purpose!\\
+So far, the method \code{move} only checked whether \code{self.y < 10} and
+then simply \textbf{did nothing more}. This is why they stay right there.\\
+The value \code{10} was \textbf{deliberately} chosen instead of \code{0} --
+this way, you can see the ``garbage'' that our code has produced so far.
+\end{region}
+
+\begin{region}[pitch=13.53]{180.3}
+\subheading{Task}
+Now we clean up: the class \code{Rocket} gets a new attribute \code{alive}.
+When a rocket reaches the ceiling (i.e., \code{y < 10}), this attribute is set
+to \code{False} -- and we then remove the rocket from the list
+\code{rockets}.
+\end{region}
+
+\begin{region}{248.3}
+\textbf{New class Rocket in \codemd{rocket.py}:}
+\end{region}
+
+\begin{region}{261.1}
+\begin{lstlisting}[style=pysmall]
+class |\cy{Rocket}|:
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=11]{273.2}
+\begin{lstlisting}[style=pysmall]
+    def |\cy{\_\_init\_\_}|(self, x, y, vy):
+        self.x = x
+        self.y = y
+        self.vy = vy
+        self.c = (255, 255, 255)
+        self.alive = True
+
+    def |\cy{move}|(self):
+        if self.y < 10:
+            self.alive = False
+            return
+        self.y += self.vy
+
+    def |\cy{draw}|(self):
+        pygame.draw.circle(Game.screen, self.c, (self.x, self.y), 5)
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.3]{453.7}
+\textbf{In the main loop of \codemd{breakout.py}}\\
+add the following line after drawing and moving the rockets:
+\end{region}
+
+\begin{region}{493.6}
+\begin{lstlisting}[style=py]
+    rockets = [item for item in rockets if item.alive]
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=14.3]{519.4}
+\subheading{What does this line do?}
+This is a so-called \textbf{list comprehension}. It creates a new list that
+\textbf{contains only the rockets} for which \code{alive == True} -- that is,
+those that have not yet ``exploded'' at the ceiling. \textbf{In short:}
+``Keep only the living rockets.''
+\end{region}
+
+\begin{region}[pitch=13.6]{589.7}
+\textbf{If everything works}, you can improve the \code{move} method of a
+rocket a little: set \code{alive} to False as soon as the y-coordinate is less
+than \code{0}.
+\end{region}
+
+\begin{region}[pitch=13.4]{630.6}
+\textbf{Attention:} Afterwards, be sure to test once more whether everything
+still works correctly -- to rule out typical last-minute typos.
+\end{region}
+
+\begin{region}[pitch=13.35]{671.2}
+\subheading{Then into the repository:}
+\code{git add rocket.py breakout.py}\\
+\code{git commit -m "rockets disappear at the ceiling"}\\
+\code{git push}
+\end{region}
+
+\begin{region}[pitch=13.2]{738.6}
+\subheading{Final remark:}
+In the same way, you can also make balls disappear that you miss with the
+paddle. That is where we will start next time -- to pick up right where we
+left off today.
+\end{region}
+
+\end{document}
