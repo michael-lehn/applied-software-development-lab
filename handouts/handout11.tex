@@ -1,0 +1,1684 @@
+% Applied Software Development Lab -- Lab Handout 11: Levels, lives, variety, and control
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 11".
+\documentclass{aslab}
+\sethandout{11}{Levels, lives, variety, and control}
+\graphicspath{{../figures/handout11/}{../figures/shared/}}
+
+%% Python code blocks: one source line per output line, spaces are kept
+%% (each one character wide) and the baseline distance is fixed.
+%% Syntax colors: \kw keyword, \fn function/builtin/constant, \num number or
+%% string, \str string (dark red), \cmt comment, \imp import statement.
+\definecolor{codestring}{HTML}{B51700}
+\newcommand*\kw[1]{\textcolor{codeorange}{#1}}
+\newcommand*\fn[1]{\textcolor{codecyan}{#1}}
+\newcommand*\num[1]{\textcolor{codered}{#1}}
+\newcommand*\str[1]{\textcolor{codestring}{#1}}
+\newcommand*\cmt[1]{\textcolor{codepurple}{#1}}
+\newcommand*\imp[1]{\textcolor{codemagenta}{#1}}
+\makeatletter
+\newcommand*\py@space{\leavevmode\hbox to 0.6em{}}
+{\catcode`\^^M=\active\catcode`\ =\active%
+ \gdef\py@setup{\def^^M{\leavevmode\par}\let =\py@space}%
+ \gdef\py@gobble#1^^M{}}
+\newenvironment{pycode}{\par\ttfamily\hyphenchar\font=-1
+  \lineskiplimit=-\maxdimen\lineskip=0pt\parindent=0pt
+  \parfillskip=0pt plus 1fil\relax
+  \catcode`\^^M=\active\catcode`\ =\active\py@setup\py@gobble}{}
+\makeatother
+%% Emoji at the start of a line, followed by the text at +18bp
+\newcommand*\emo[1]{\makebox[18bp][l]{\emoji{#1}}}
+\newcommand*\catemo{\makebox[18bp][l]{{\emojifont ^^^^^^01f408^^^^200d^^^^2b1b}}}
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}[pitch=15.5]{118.0}
+{\bfseries\color{aslabblue}Learning objective: Bringing a software project to a
+playable, impressive conclusion under realistic conditions (read: shortly
+before the deadline)\par}
+\end{region}
+
+\begin{region}[pitch=14.27]{154.1}
+{\bfseries\color{aslabblue}Note: This time, the steps contain no explicit
+prompts to commit your current state to the repository. You can now handle
+that on your own -- and rightly so!\\
+In case you do hesitate for a moment: Step~13 on the last page has a little
+reminder and instructions.\par}
+\end{region}
+
+\begin{region}{225.4}
+\heading{Preparation}
+\end{region}
+
+\begin{region}{243.1}
+As usual, we work with two terminals:
+\end{region}
+
+\begin{region}[pitch=14.3]{256.2}
+\begin{dashlist}
+\item \textbf{left}: edit the source code
+\item \textbf{right}: test the game
+\end{dashlist}
+\end{region}
+
+\begin{region}{290.3}
+Cloning the repository:
+\end{region}
+
+\begin{region}[pitch=13.2]{309.2}
+\begin{pycode}
+git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm
+cd asp-ulm/python
+python breakout.py
+\end{pycode}
+\end{region}
+
+\begin{region}{355.0}
+As always, \textbf{take a moment to familiarize yourselves} with the features
+your game currently supports.
+\end{region}
+
+\begin{region}[pitch=14.2]{374.8}
+If \textbf{unexpected crashes occur} -- and you are \textbf{lucky enough} to
+discover them now -- it is best to fix them right away. \textbf{We are happy
+to help.}
+\end{region}
+
+\begin{region}{416.5}
+\heading{Step 1: Bombs are not just for decoration}
+\end{region}
+
+\begin{region}[pitch=13.25]{435.1}
+When the paddle is hit by a bomb, it should be \textbf{out of action} for a
+certain time. In this step, we first only check whether a bomb hits the
+paddle. If so, the bomb should detonate.
+\end{region}
+
+\begin{region}[pitch=13.9]{480.1}
+To do this, you can \textbf{proceed similarly} to the check whether a ball
+hits the paddle.\\
+If you want to do it really well: take a look at \code{ball.py}. There, the
+\code{move} method checks whether the \textbf{center} of the ball crosses the
+\textbf{top edge} of the paddle.
+\end{region}
+
+\begin{region}[pitch=13.75]{525.9}
+If you proceed analogously, you can adapt the \code{move} method in
+\code{bomb.py} accordingly. The code is even \textbf{a bit simpler} here,
+because our bombs always fall \textbf{straight down}.
+\end{region}
+
+\begin{region}[pitch=14.2]{571.2}
+When the paddle is hit, you simply set the attribute \code{self.hit = True}.
+The \code{draw} method takes care of the rest -- \textbf{without any
+changes}.
+\end{region}
+
+\begin{region}{603.4}
+Your \code{move} method in \code{bomb.py} could then look like this, for
+example:
+\end{region}
+
+\begin{region}[]{630.0}
+\begin{pycode}
+    \kw{def} \fn{move}(self):
+        \kw{if} self.y < \num{0} \kw{or} self.y > Game.height:
+            self.alive = \fn{False}
+            \kw{return}
+        new\_y = self.y + self.vy
+        \kw{if} self.y < Paddle.y-\num{10} \kw{and} new\_y >= Paddle.y-\num{10}:
+            \kw{if} self.x >= Paddle.x \kw{and} self.x <= Paddle.x + Paddle.w:
+                self.hit = \fn{True}
+        self.y = new\_y
+\end{pycode}
+\end{region}
+
+\begin{region}{752.7}
+\textbf{Task:} Test whether, after your change, the bombs explode when they
+hit the paddle.
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Step 2: Bombs are bad for the paddle}
+\end{region}
+
+\begin{region}[pitch=14.0]{88.1}
+When the paddle has been hit, this should have \textbf{consequences}: for a
+certain time, it is \textbf{out of action} -- and, in particular,
+\textbf{not visible}. Here is a small \textbf{template} showing how the
+feature can be implemented \textbf{at least partially}. You will extend the
+rest yourselves in the course of the task.
+\end{region}
+
+\begin{region}{151.9}
+\emo{1F9F1}\textbf{In} \code{paddle.py}
+\end{region}
+
+\begin{region}[pitch=14.2]{167.9}
+The paddle gets a new static attribute \code{damage}, which is initialized
+with \code{0}. It indicates \textbf{for how many frames} the paddle cannot be
+used. The class \code{Paddle} thus begins like this, for example:
+\end{region}
+
+\begin{region}[]{200.1}
+\begin{pycode}
+\kw{class} \fn{Paddle}:
+    c = (\num{0}, \num{0}, \num{255})
+    w, h = \num{100}, \num{30}
+    x, y = \fn{None}, \fn{None}
+    damage = \num{0}
+\end{pycode}
+\end{region}
+
+\begin{region}{268.6}
+\emo{1F4A5}\textbf{New method} \code{hit}
+\end{region}
+
+\begin{region}[pitch=13.3]{285.3}
+The method \code{hit()} ``destroys'' the paddle -- \textbf{but only if it is
+still intact}. If it is already damaged, nothing happens.
+\end{region}
+
+\begin{region}[pitch=13.2]{317.5}
+\begin{pycode}
+    \kw{def} \fn{hit}():
+        \kw{if} Paddle.damage == \num{0}:
+\end{pycode}
+\end{region}
+\begin{region}[]{342.7}
+\begin{pycode}
+            Paddle.damage = \num{90}
+            \kw{return} \fn{True}
+        \kw{return} \fn{False}
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=13.6]{383.4}
+\textbf{Note:} The method returns \code{True} if the paddle has just been
+damaged. Otherwise, it returns \code{False} (e.g., if it is already broken
+anyway).
+\end{region}
+
+\begin{region}{414.6}
+\emo{270F}\textbf{Adapting the} \code{draw} \textbf{method}
+\end{region}
+
+\begin{region}{430.4}
+If the paddle is damaged, it is not drawn -- but the damage is reduced:
+\end{region}
+
+\begin{region}[]{443.8}
+\begin{pycode}
+    \kw{def} \fn{draw}():
+        \kw{if} Paddle.damage > \num{0}:
+            Paddle.damage -= \num{1}
+            \kw{return}
+        pygame.draw.rect(Game.screen, Paddle.c,
+                         (Paddle.x, Paddle.y, Paddle.w, Paddle.h))
+\end{pycode}
+\end{region}
+
+\begin{region}{516.7}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.38]{528.8}
+\begin{tasks}
+\item Adapt the code in \code{paddle.py} as described above. As always, try
+  to understand exactly what happens. Now, of course, \code{Paddle.hit()}
+  should be called when an intact paddle is hit by a bomb.\\
+  To do this, change the line \code{self.hit = True} in \code{bomb.py} to
+  \code{self.hit = Paddle.hit()}. This way, \code{self.hit} is only set to
+  \code{True} if the paddle was actually damaged by the bomb hit.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{608.9}
+\begin{tasks}[start=2]
+\item The paddle is now invisible for a while after it has been hit -- but
+  it is still there. That is, even in its damaged state, it can still
+  reflect balls.\\
+  Hence, two subtasks:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.95]{649.4}
+\begin{steps}[label=\textbf{(\alph*)}]
+\item \textbf{(hard) Observe the behavior}\\
+  First, try to \textbf{consciously observe} the problem before you fix it.
+  \textbf{Can you make a ball bounce off an invisible paddle?} That is not
+  easy at all -- but this is exactly the kind of behavior a good test team
+  should discover
+\end{steps}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.0]{705.3}
+\begin{steps}[label=\textbf{(\alph*)},start=2]
+\item \textbf{(easy) Fix the problem}\\
+  In \code{ball.py}, adapt the place where it is checked whether the ball
+  collides with the paddle. Add an additional condition there so that the
+  ball \textbf{is only reflected} if the paddle \textbf{is intact}.
+\end{steps}
+\end{region}
+
+\begin{region}[pitch=13.2]{760.7}
+\begin{tasks}[start=3]
+\item Now also fix the problem that you can currently still fire rockets
+  with a destroyed paddle.
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\heading{Step 3: Long live variety (part 1 of 3)}
+\end{region}
+
+\begin{region}[pitch=14.3]{88.1}
+Currently, our bricks are still rather \textbf{monotonous}: they are either
+\textbf{there or gone} -- nothing more.\\
+That is about to change. There should be \textbf{different kinds of bricks},
+for example:
+\end{region}
+
+\begin{region}[pitch=14.3]{115.6}
+\begin{dashlist}
+\item Bricks that you have to \textbf{hit twice} (only then do they
+  disappear)
+\item Bricks that bring \textbf{a new ball} into the game when destroyed
+\item Bricks that give the paddle \textbf{a temporary protective shield} --
+  after that, you are immune to bombs for a while
+\end{dashlist}
+\end{region}
+
+\begin{region}{171.1}
+\begin{dashlist}
+\item And maybe more\dots
+\end{dashlist}
+\end{region}
+
+\begin{region}{199.0}
+\subheading{Idea: numbers for brick types}
+\end{region}
+
+\begin{region}{216.7}
+The type of a brick can initially be encoded with numbers:
+\end{region}
+
+\begin{region}[pitch=14.67]{230.0}
+\begin{dashlist}
+\item \code{0} $\rightarrow$ no brick
+\item \code{1} $\rightarrow$ normal brick (what we have had so far)
+\item \code{2} $\rightarrow$ brick that has to be hit twice
+\item \code{3} $\rightarrow$ brick that creates a new ball
+\item \code{4} $\rightarrow$ brick that activates a protective shield
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.3]{316.7}
+This has the advantage that, as before, you can work with a \code{numpy}
+array or with comparison operators.
+\end{region}
+
+\begin{region}[pitch=13.3]{357.3}
+\textbf{But}: \textbf{numbers alone} are \textbf{not particularly
+expressive} -- you quickly forget what 3 or 4 stood for.
+\end{region}
+
+\begin{region}{397.9}
+\textbf{Remedy:} \code{enum} \textbf{types}
+\end{region}
+
+\begin{region}{416.5}
+Here comes a mini crash course -- entirely in the style of:
+\textbf{``Learning by using and playing around.''}
+\end{region}
+
+\begin{region}{443.3}
+Create a new file named \code{bricktype.py} with the following content:
+\end{region}
+
+\begin{region}[pitch=13.2]{470.0}
+\begin{pycode}
+  \kw{1} \imp{from} enum \imp{import} IntEnum
+  \kw{2}
+\end{pycode}
+\end{region}
+\begin{region}[]{495.2}
+\begin{pycode}
+  \kw{3 class} \fn{BrickType}(IntEnum):
+  \kw{4}     NONE = \num{0}
+  \kw{5}     NORMAL = \num{1}
+  \kw{6}     BALL = \num{2}
+  \kw{7}     SHIELD = \num{3}
+  \kw{8}     TWICE = \num{4}
+  \kw{9}
+ \kw{10}     \kw{def} \fn{label}(self):
+ \kw{11}         \kw{return} f\num{"Dummy label for \{self\}"}
+ \kw{12}
+ \kw{13 def} \fn{main}():
+ \kw{14}     \fn{print}(\fn{max}(BrickType))
+ \kw{15}     \fn{print}(BrickType.BALL)
+ \kw{16}     \fn{print}(BrickType.BALL.label())
+ \kw{17}     foo = BrickType(\num{4})
+ \kw{18}     \fn{print}(foo)
+ \kw{19}     \fn{print}(foo.label())
+ \kw{20}
+ \kw{21}
+ \kw{22 if} \_\_name\_\_ == \num{"\_\_main\_\_"}:
+ \kw{23}     main()
+\end{pycode}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{69.4}
+\subheading{Explanations}
+\end{region}
+
+\begin{region}[pitch=14.25]{95.9}
+\begin{dashlist}
+\item In \textbf{line 3}, \code{BrickType} is declared as an extension of
+  \code{IntEnum}. At this point, we will \textbf{not go into detail} about
+  what this means -- \textbf{except} in a later \textbf{subtask}, in which you
+  remove the \code{(IntEnum)} once to see \textbf{what suddenly no longer
+  works}.
+\item In \textbf{lines 4--8}, the different \textbf{kinds of bricks} are
+  defined as constants with \textbf{meaningful names} -- much more readable
+  than plain numbers.
+\item In \textbf{lines 10--11}, a method label is defined that, for now, only
+  returns a \textbf{placeholder text} -- but already shows \textbf{what is
+  possible with enums}.
+\end{dashlist}
+\end{region}
+
+\begin{region}{222.0}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.5]{248.8}
+\begin{tasks}
+\item Try it out with \code{python bricktype.py}. Observe the following:
+  \begin{bullets}
+  \item \code{max(BrickType)} returns the largest enum member -- in this
+    case, \code{BrickType.TWICE}
+  \item You can use \code{BrickType.BALL} instead of the number \code{2} --
+    much more expressive!
+  \item \code{BrickType.BALL} is not simply a number: for example, you can
+    apply \code{.label()} to it
+  \item With \code{BrickType(4)}, you can convert an ordinary integer value
+    back into a \code{BrickType} object
+  \end{bullets}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=14.3]{343.3}
+\begin{tasks}[start=2]
+\item \textbf{What do we gain from this} \code{(IntEnum)}\textbf{?}\\
+  In \textbf{line 3}, remove the \code{(IntEnum)} and run the program again:
+  \begin{bullets}
+  \item \textbf{Error in line 14}. The function \code{max()} can no longer be
+    applied to the class.
+  \end{bullets}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.6]{391.7}
+\textbf{Comment out line 14} and run the program again:
+\begin{bullets}
+\item Now you get a new \textbf{error in line 16}. \code{BrickType.BALL} is
+  now just a number, and the method \code{label} can no longer be applied.
+\end{bullets}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{439.2}
+\textbf{What we learn about the effect of} \code{(IntEnum)}\textbf{:}
+\begin{bullets}
+\item Attributes such as \code{BrickType.BALL} are not ordinary \code{int}
+  values but objects of type \code{BrickType}
+\item These objects have methods such as \code{.label()}, which you define
+  yourself
+\item In addition, you ``inherit'' certain things, e.g., that you can write
+  \code{max(BrickType)}
+\end{bullets}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.2]{526.2}
+\textbf{Undo all changes}: you are welcome to look into the exact details on
+a \textbf{quieter day} -- today is about \textbf{understanding by trying
+things out}, not about the last Python detail \emoji{1F609}
+\end{region}
+
+\begin{region}[pitch=13.3]{574.8}
+\begin{tasks}[start=3]
+\item \textbf{Extending the} \code{main()} \textbf{function and improving}
+  \code{label()}\\
+  Change the function main() as follows:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,pitch=13.2]{607.1}
+\begin{pycode}
+\kw{def} \fn{main}():
+    \kw{for} i \kw{in} \fn{range}(\num{0}, \fn{max}(BrickType)):
+        bt = BrickType(i)
+        \fn{print}(f\str{"i = \{i\}, bt = \{bt\}, bt.label = \{bt.label()\}"})
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.6]{665.3}
+Run the program and follow what happens. Now change the method
+\code{label()} so that -- depending on the value of \code{self} -- it
+returns the following text:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{692.4}
+\begin{bullets}
+\item \code{"Ball"} for \code{BrickType.BALL}
+\item \code{"Shield"} for \code{BrickType.SHIELD}
+\item \code{"Twice"} for \code{BrickType.TWICE}
+\item In all other cases, the empty string \code{""}
+\end{bullets}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{750.5}
+\emo{1F449}This is a small exercise in \code{if}--\code{elif}--\code{else}.
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\heading{Step 4: Long live variety (part 2 of 3)}
+\end{region}
+
+\begin{region}[pitch=13.8]{88.1}
+Now the class BrickType is \textbf{brought into the game very gently}. At
+first, it is \textbf{only about the display}: bricks should \textbf{differ
+visually} by having a small \textbf{label} text printed on them.
+\end{region}
+
+\begin{region}{129.8}
+\textbf{Important}: these bricks \textbf{do not behave differently yet} --
+that comes later.
+\end{region}
+
+\begin{region}{160.7}
+\emo{1F9F1}In \code{wall.py}
+\end{region}
+
+\begin{region}{189.8}
+First, import our new class with \code{from bricktype import BrickType}.
+\end{region}
+
+\begin{region}{220.6}
+\emo{1F6E0}\textbf{Adapting the} \code{init} \textbf{method}
+\end{region}
+
+\begin{region}{236.6}
+Then change the method \code{init} as follows:
+\end{region}
+
+\begin{region}[]{263.3}
+\begin{pycode}
+ \kw{12}     \kw{def} \fn{init}():
+ \kw{13}         \kw{for} i \kw{in} \fn{range}(\num{4}, \num{8}):
+ \kw{14}             \kw{for} j \kw{in} \fn{range}(\num{0}, Game.brick\_cols):
+ \kw{15}                 Wall.brick[i, j] = random.randint(\num{1}, \fn{max}(BrickType))
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=13.5]{324.5}
+Previously, all cells there were bluntly filled with \code{1} -- now each
+cell gets a random \code{BrickType} value (from \code{1} up to and including
+\code{4}).
+\end{region}
+
+\begin{region}{368.8}
+\emo{1F5BC}\textbf{Extending the} \code{draw} \textbf{method}
+\end{region}
+
+\begin{region}[pitch=14.2]{384.8}
+Now we make the new brick types visible. In the \code{draw} method, add the
+following code starting at \textbf{line 45}:
+\end{region}
+
+\begin{region}[]{425.7}
+\begin{pycode}
+\kw{33}     \kw{def} \fn{draw}():
+\kw{34}         \kw{for} i \kw{in} \fn{range}(\num{0}, Wall.brick.shape[\num{0}]):
+\kw{35}             \kw{for} j \kw{in} \fn{range}(\num{0}, Wall.brick.shape[\num{1}]):
+\kw{36}                 \kw{if} \kw{not} Wall.brick[i, j]:
+\kw{37}                     \kw{continue}
+\kw{38}                 w = Game.brick\_width
+\kw{39}                 h = Game.brick\_height
+\kw{40}                 x = j * w
+\kw{41}                 y = i * h
+\kw{42}                 r = (x + \num{1}, y + \num{1}, w - \num{1}, h - \num{1})
+\kw{43}                 pygame.draw.rect(Game.screen, (\num{223}, \num{105}, \num{165}), r)
+\kw{44}
+\kw{45}                 label = BrickType.label(Wall.brick[i, j])
+\kw{46}                 font = pygame.font.SysFont(\fn{None}, \num{24})
+\kw{47}                 text = font.render(label, \fn{True}, (\num{255}, \num{255}, \num{255}))
+\kw{48}                 text\_rect = text.get\_rect(center=(x+w//\num{2}, y+h //\num{2}))
+\kw{49}                 Game.screen.blit(text, text\_rect)
+\end{pycode}
+\end{region}
+
+\begin{region}{656.6}
+Here, the label is now drawn onto the rectangle:
+\end{region}
+
+\begin{region}[pitch=14.27]{669.8}
+\begin{dashlist}
+\item \textbf{Line 45}: calls \code{BrickType.label(...)} and returns an
+  ordinary string.
+\item \textbf{Line 46}: creates a \code{Font} object (font size 24, default
+  font).
+\item \textbf{Line 47}: converts the string into a \textbf{bitmap image}
+  (font color: white, with antialiasing).
+\item \textbf{Lines 48--49}: draws the text \textbf{centered} in the brick's
+  rectangle.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.5]{95.9}
+\begin{tasks}
+\item Test whether your adaptation works -- i.e., whether some bricks now
+  have labels. You should be able to read, e.g., \code{"Ball"},
+  \code{"Shield"}, or \code{"Twice"} on individual bricks.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=14.25]{123.6}
+\begin{tasks}[start=2]
+\item Currently, \textbf{too many special bricks} appear -- this looks a bit
+  cluttered. It would be better if, with a certain probability (e.g.,
+  \textbf{20\,\%}), a brick got a special function and otherwise simply
+  became a \textbf{normal} brick (\code{NORMAL}).
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7]{169.8}
+Suggestion:
+\end{region}
+
+\begin{region}[x=74.7,pitch=13.2]{187.6}
+\begin{pycode}
+\kw{if} random.randint(\num{1}, \num{100}) <= \num{20}:
+    ty = random.randint(\num{1}, \fn{max}(BrickType))
+\kw{else}:
+    ty = \num{1}
+Wall.brick[i, j] = ty
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{258.0}
+Note: In the special selection, \code{BALL}, \code{SHIELD}, and
+\code{TWICE} are then equally likely -- which is perfectly fine for our
+purposes.
+\end{region}
+
+\begin{region}[pitch=13.3]{284.5}
+\begin{tasks}[start=3]
+\item[3.] It is not dramatic -- but still a small break in style -- that a
+  new font object is created in every single \code{draw()} iteration. Even
+  if the performance loss is barely measurable: good code has manners.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{328.7}
+It would be better if the font object were created once, centrally, in the
+Game class.
+\end{region}
+
+\begin{region}[x=74.7]{352.8}
+\emo{1F527}\textbf{Here's how}
+\end{region}
+
+\begin{region}[x=74.7]{373.2}
+In \code{game.py}, add a new attribute to the class Game:
+\end{region}
+
+\begin{region}[x=74.7,pitch=13.2]{391.1}
+\begin{pycode}
+\kw{class} \fn{Game}:
+    \cmt{\# ... as before ...}
+    font = \fn{None}
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7]{435.4}
+Then adapt the \code{init()} method as follows:
+\end{region}
+
+\begin{region}[x=74.7,pitch=13.2]{462.1}
+\begin{pycode}
+    \kw{def} \fn{init}():
+        \cmt{\# ...}
+        pygame.init()
+        \cmt{\# ...}
+        Game.font = pygame.font.SysFont(\fn{None}, \num{24})
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{542.0}
+\textbf{Important:} The font object must not be created until after
+\code{pygame.init()} has been called!
+\end{region}
+
+\begin{region}[x=74.7]{568.7}
+Afterwards, in \code{wall.py}, you can replace the line
+\end{region}
+
+\begin{region}[x=90.0]{587.7}
+\begin{pycode}
+font = pygame.font.SysFont(\fn{None}, \num{24})
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7]{606.5}
+with:
+\end{region}
+
+\begin{region}[x=90.0]{625.4}
+\begin{pycode}
+font = Game.font
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=13.5]{652.8}
+\begin{tasks}[start=4]
+\item \textbf{Optional polish: color by type}\\
+  In \code{bricktype.py}: add a method color to the class \code{BrickType}
+  that -- analogous to the method \code{label()} -- returns a suitable color
+  for each brick type.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{701.0}
+In \code{wall.py}: adapt the \code{draw()} method so that the color for the
+brick is now obtained from the \code{color()} method before drawing:
+\end{region}
+
+\begin{region}[x=87.9,pitch=13.5]{741.2}
+\begin{pycode}
+c = BrickType.color(Wall.brick[i, j])
+pygame.draw.rect(Game.screen, c, r)
+\end{pycode}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}{69.4}
+\heading{Step 5: Long live variety (part 3 of 3)}
+\end{region}
+
+\begin{region}[pitch=14.3]{88.1}
+Our special bricks should now not \textbf{only look different} but also
+\textbf{have an effect} when you hit them.
+\end{region}
+
+\begin{region}[pitch=14.3]{121.0}
+We approach this \textbf{step by step} -- and start right away with the
+``most complicated'' case: the \textbf{bricks that have to be hit twice}.
+\end{region}
+
+\begin{region}{158.5}
+\emo{1F9E0}\textbf{Idea: changing the kind of brick on a hit}
+\end{region}
+
+\begin{region}[pitch=14.3]{175.2}
+Bricks of type \code{TWICE} should \textbf{turn into} \code{NORMAL}
+\textbf{on the first hit},\\
+and then \textbf{disappear} on the second hit.
+\end{region}
+
+\begin{region}{212.6}
+\emo{1F9F1}\textbf{In} \code{bricktype.py}
+\end{region}
+
+\begin{region}[pitch=13.3]{228.6}
+Extend the class \code{BrickType} with a method \code{effect()} that returns
+what a brick should turn into when it is hit:
+\end{region}
+
+\begin{region}[]{259.7}
+\begin{pycode}
+    \kw{def} \fn{effect}(self):
+        \kw{if} self == BrickType.TWICE:
+            \kw{return} BrickType.NORMAL
+        \kw{else}:
+            \kw{return} BrickType.NONE
+\end{pycode}
+\end{region}
+
+\begin{region}{329.3}
+\emo{1F527}\textbf{In} \code{wall.py}
+\end{region}
+
+\begin{region}{345.1}
+In the method collision(), a brick that was hit used to be simply deleted,
+e.g., like this:
+\end{region}
+
+\begin{region}[pitch=13.2]{364.0}
+\begin{pycode}
+    \kw{if} Wall.brick[i2, j2]:
+        Wall.brick[i2, j2] = 0
+\end{pycode}
+\end{region}
+
+\begin{region}{394.2}
+Now replace this with:
+\end{region}
+
+\begin{region}[]{411.5}
+\begin{pycode}
+    \kw{if} Wall.brick[i2, j2]:
+        Wall.brick[i2, j2] = BrickType.effect(Wall.brick[i2, j2])
+\end{pycode}
+\end{region}
+
+\begin{region}{440.7}
+This way, each brick decides for itself what happens to it when it is hit.
+\end{region}
+
+\begin{region}{481.2}
+\subheading{Task}
+\end{region}
+
+\begin{region}{507.9}
+\begin{tasks}
+\item Test whether bricks of type \code{TWICE} now only disappear on the
+  second hit.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{535.3}
+\textbf{Pro tip}: To test this specifically, you can \textbf{temporarily set
+all bricks to} \code{TWICE} in the \code{init()} method of \code{Wall},
+e.g.:
+\end{region}
+
+\begin{region}[x=74.7]{568.7}
+\begin{pycode}
+    Wall.brick[i, j] = \num{4} \cmt{\# ty}
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{587.4}
+This saves you the tedious search for the right brick -- and you can see
+immediately whether the behavior is correct.
+\end{region}
+
+\begin{region}[pitch=13.9]{614.7}
+\begin{tasks}[start=2]
+\item \textbf{The easy case? Think again.}\\
+  Actually, everything would now be quite easy: when a brick of type
+  \code{BALL} is hit, \textbf{a new ball should come into play}.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{662.2}
+\textbf{Sounds simple}: just create a new \code{Ball} object, append it to
+\code{Game.balls}, done! \textbf{But think again}. Python unfortunately makes
+the \textbf{actually easy case} complicated.
+\end{region}
+
+\begin{region}[x=74.7]{699.7}
+\emo{1F9EA}\textbf{Experiment: what goes wrong?}
+\end{region}
+
+\begin{region}[x=74.7]{721.2}
+In \code{bricktype.py}, add the following line at the top:
+\end{region}
+
+\begin{region}[x=74.7]{740.2}
+\begin{pycode}
+\imp{from} ball \imp{import} Ball
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{758.6}
+Make no other changes -- and start the game. It will not work.
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\heading{Step 6: Cyclic dependencies}
+\end{region}
+
+\begin{region}{88.1}
+What \textbf{went wrong} at the end of the last step? You have created the
+following \textbf{import chain}:
+\end{region}
+
+\begin{region}[pitch=13.5]{101.0}
+\begin{dashlist}
+\item \code{bricktype.py} imports \code{ball.py}
+\item \code{ball.py} imports \code{wall.py}
+\item \code{wall.py} imports \code{bricktype.py}
+\end{dashlist}
+\end{region}
+
+\begin{region}{146.3}
+\catemo\textbf{And so the cat is chasing its own tail.}
+\end{region}
+
+\begin{region}[pitch=14.27]{168.5}
+In an ``ideal'' object-oriented language, every class can \textbf{refer to
+other classes arbitrarily} -- after all, that is exactly the point of modular
+development. But in \textbf{Python}, \textbf{all of the code is executed
+immediately} on import -- and because Python does not cleanly separate
+\textbf{interface} and \textbf{implementation}, \textbf{cyclic dependencies}
+lead to technical problems.
+\end{region}
+
+\begin{region}{234.5}
+\emo{1FA79}\textbf{Makeshift solutions (not recommended)}
+\end{region}
+
+\begin{region}[pitch=13.9]{251.2}
+An unclean solution would be to replace (almost) \textbf{all}
+\code{from ... import ...} statements\\
+with plain \code{import ...} statements and to use, e.g.,
+\code{module.Class} later on.\\
+This \textbf{circumvents} the problem -- but it is not pretty and breaks with
+the style.
+\end{region}
+
+\begin{region}[pitch=13.28]{298.0}
+Another (even more questionable) option would be to write the
+\code{from ball import Ball} directly into the method where the ball is
+needed -- e.g., into \code{BrickType.effect}.\\
+That would be a quick solution, but honestly: it breaks my heart. On every
+call, Python would check whether the module needs to be loaded. Even if this
+is technically cached: there is no need to trample all over performance.
+\end{region}
+
+\begin{region}{374.2}
+\emo{1F9FC}\textbf{A somewhat cleaner solution: controlling the imports}
+\end{region}
+
+\begin{region}[pitch=13.5]{395.7}
+We break the import cycle by no longer importing \code{BrickType} directly
+in \code{wall.py}, but passing it to \code{Wall} at runtime instead.
+\end{region}
+
+\begin{region}{432.3}
+\emo{1F9F1}\textbf{Changes in} \code{wall.py}
+\end{region}
+
+\begin{region}{453.8}
+At the top, remove the line: \code{from bricktype import BrickType}
+\end{region}
+
+\begin{region}{472.5}
+Replace the beginning of the class with:
+\end{region}
+
+\begin{region}[pitch=13.2]{491.4}
+\begin{pycode}
+\kw{class} \fn{Wall}:
+    brick = numpy.zeros((Game.brick\_rows, Game.brick\_cols))
+\end{pycode}
+\end{region}
+\begin{region}[]{516.6}
+\begin{pycode}
+    BrickType = \fn{None}
+\end{pycode}
+\end{region}
+
+\begin{region}{534.1}
+Adapt the method \code{init()} so that \code{BrickType} is passed and
+stored:
+\end{region}
+
+\begin{region}[pitch=13.2]{553.1}
+\begin{pycode}
+\kw{def} \fn{init}(BrickType):
+    Wall.BrickType = BrickType
+\end{pycode}
+\end{region}
+\begin{region}[]{578.3}
+\begin{pycode}
+    \kw{for} i \kw{in} \fn{range}(\num{4}, \num{8}):
+        \kw{for} j \kw{in} \fn{range}(\num{0}, Game.brick\_cols):
+            \kw{if} random.randint(\num{1}, \num{100}) <= \num{20}:
+                ty = random.randint(\num{2}, \fn{max}(Wall.BrickType))
+            \kw{else}:
+                ty = \num{1}
+            Wall.brick[i, j] = ty
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=13.3]{667.8}
+Change the remaining code in \code{wall.py} so that \code{Wall.BrickType} is
+always used instead of \code{BrickType}.
+\end{region}
+
+\begin{region}{704.1}
+\emo{1F527}\textbf{Changes in} \code{breakout.py}
+\end{region}
+
+\begin{region}[pitch=13.5]{725.6}
+As usual, import \code{from bricktype import BrickType} at the top.\\
+Instead of \code{Wall.init()}, now call \code{Wall.init(BrickType)}.
+\end{region}
+
+\begin{region}[pitch=14.2]{758.8}
+{\bfseries\color{aslabblue}Make the changes as described and test whether
+everything still works. If so, you now have a clean, cycle-free design and
+are ready for the next step\par}
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}{69.4}
+\heading{Step 7: Back to features}
+\end{region}
+
+\begin{region}[pitch=13.4]{88.3}
+Now that we have elegantly solved the problem of cyclic dependencies,\\
+we can finally import everything we need in \code{bricktype.py} --
+\end{region}
+
+\begin{region}{119.3}
+(at least everything except from \code{breakout.py} \emoji{1F609}).
+\end{region}
+
+\begin{region}{140.5}
+For the next step, this is enough:
+\end{region}
+
+\begin{region}[pitch=13.2]{159.4}
+\begin{pycode}
+\imp{from} ball \imp{import} Ball
+\imp{from} game \imp{import} Game
+\end{pycode}
+\end{region}
+
+\begin{region}{198.6}
+\emo{1F527}\textbf{Adapting the} \code{effect()} \textbf{method}
+\end{region}
+
+\begin{region}{220.1}
+Now you can extend the method \code{effect()} in the class \code{BrickType}
+as planned:
+\end{region}
+
+\begin{region}[pitch=13.2]{239.1}
+\begin{pycode}
+\kw{def} \fn{effect}(self):
+    \kw{if} self == BrickType.TWICE:
+\end{pycode}
+\end{region}
+\begin{region}[]{264.3}
+\begin{pycode}
+        \kw{return} BrickType.NORMAL
+    \kw{elif} self == BrickType.BALL:
+        Game.balls.append(Ball(\num{100}, \num{0}, -\num{3}, \num{4}))
+        \kw{return} BrickType.NONE
+    \kw{else}:
+       \kw{return} BrickType.NONE
+\end{pycode}
+\end{region}
+
+\begin{region}{345.9}
+\emo{1F9EA}\textbf{Test}
+\end{region}
+
+\begin{region}[pitch=13.4]{362.6}
+With this change, destroying a brick of type \code{BALL} should bring a
+\textbf{new ball} into the game.
+\end{region}
+
+\begin{region}[pitch=13.2]{394.9}
+To test this specifically, you can -- as in earlier tasks -- temporarily
+initialize the bricks in \code{wall.py} like this:
+\end{region}
+
+\begin{region}[]{427.0}
+\begin{pycode}
+Wall.brick[i, j] = \num{2} \cmt{\# ty}
+\end{pycode}
+\end{region}
+
+\begin{region}{445.5}
+Then you will see immediately whether a new ball is created on a hit.
+\end{region}
+
+\begin{region}{472.8}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.9]{492.7}
+While testing, you may be pleased only briefly that a new ball comes into
+play. Unfortunately, it is created \textbf{above the brick wall} -- and then
+makes for a rather boring game, because it simply clears \textbf{bricks from
+top to bottom} until a big hole has been punched through.
+\end{region}
+
+\begin{region}{557.4}
+\emo{1F9E0}\textbf{Idea}
+\end{region}
+
+\begin{region}[pitch=13.2]{578.6}
+We change the game behavior so that a newly created ball is initially
+inactive -- i.e., it flies through the bricks until it is hit by the paddle.
+Only then does it become active and can destroy bricks.
+\end{region}
+
+\begin{region}{635.7}
+\emo{1F527}\textbf{Implementation in} \code{ball.py}
+\end{region}
+
+\begin{region}{657.2}
+\begin{tasks}
+\item In the constructor (\code{__init__}), the ball gets a new attribute:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7]{675.1}
+\begin{pycode}
+self.active = \fn{False}
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=13.6]{692.7}
+\begin{tasks}[start=2]
+\item In the \code{move()} method:
+  \begin{bullets}
+  \item Only call \code{Wall.collision(...)} if \code{self.active == True}
+  \item When the ball hits the paddle, set \code{self.active = True}
+  \end{bullets}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=14.2]{747.1}
+{\bfseries\color{aslabblue}Start the game and check whether a new ball now
+first falls through the brick wall\\
+and can destroy bricks only after contact with the paddle.\par}
+\end{region}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{69.4}
+\heading{Step 8: Protective shield}
+\end{region}
+
+\begin{region}[pitch=13.2]{95.9}
+Now the paddle gets yet another feature: a protective shield that prevents
+bomb damage for a certain time.
+\end{region}
+
+\begin{region}{139.8}
+\emo{1F9F1}\textbf{Preparation in} \code{paddle.py}
+\end{region}
+
+\begin{region}[pitch=13.3]{161.3}
+First, the class Paddle is extended with a new attribute \code{shield},
+similar to \code{damage}.\\
+It counts down as long as the shield is active:
+\end{region}
+
+\begin{region}[pitch=13.2]{193.5}
+\begin{pycode}
+\kw{class} \fn{Paddle}:
+    \cmt{\# ...}
+\end{pycode}
+\end{region}
+\begin{region}[]{218.7}
+\begin{pycode}
+    damage = \num{0}
+    shield = \num{0}
+\end{pycode}
+\end{region}
+
+\begin{region}{252.3}
+\emo{1F4A5}\textbf{Adapting the method} \code{hit()}
+\end{region}
+
+\begin{region}{273.8}
+The shield protects against damage -- so \code{hit()} has to be adapted like
+this:
+\end{region}
+
+\begin{region}[pitch=13.2]{292.8}
+\begin{pycode}
+\kw{def} \fn{hit}():
+    \kw{if} Paddle.damage == \num{0} \kw{and} Paddle.shield == \num{0}:
+\end{pycode}
+\end{region}
+\begin{region}[]{318.0}
+\begin{pycode}
+        Paddle.damage = \num{90}
+        \kw{return} \fn{True}
+    \kw{return} \fn{False}
+\end{pycode}
+\end{region}
+
+\begin{region}{363.6}
+\emo{2728}\textbf{New method} \code{set_shield()}
+\end{region}
+
+\begin{region}{379.3}
+This method activates the shield:
+\end{region}
+
+\begin{region}[pitch=13.2]{398.2}
+\begin{pycode}
+\kw{def} \fn{set\_shield}():
+    Paddle.shield = \num{300}
+\end{pycode}
+\end{region}
+
+\begin{region}{433.0}
+\emo{1F3A8}\textbf{Cosmetics in} \code{draw()}
+\end{region}
+
+\begin{region}{448.8}
+When the shield is active, the paddle is drawn in white, for example:
+\end{region}
+
+\begin{region}[pitch=13.2]{467.7}
+\begin{pycode}
+\kw{def} \fn{draw}():
+    \kw{if} Paddle.damage > \num{0}:
+\end{pycode}
+\end{region}
+\begin{region}[]{492.9}
+\begin{pycode}
+        Paddle.damage -= \num{1}
+        \kw{return}
+    \kw{if} Paddle.shield > \num{0}:
+        Paddle.shield -= \num{1}
+        c = (\num{255}, \num{255}, \num{255})
+    \kw{else}:
+        c  = Paddle.c
+    pygame.draw.rect(Game.screen, c,
+                    (Paddle.x, Paddle.y, Paddle.w, Paddle.h))
+\end{pycode}
+\end{region}
+
+\begin{region}{607.1}
+\subheading{Task}
+\end{region}
+
+\begin{region}{633.8}
+\begin{tasks}
+\item Make the changes described above in \code{paddle.py}.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.3]{647.3}
+\begin{tasks}[start=2]
+\item Then adapt the method \code{effect()} in \code{bricktype.py} so that
+  bricks of type \code{SHIELD} are supported.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.2]{678.1}
+You know the procedure by now:
+\begin{bullets}
+\item \textbf{Think about} what you additionally need to import.
+\item \textbf{Think about} how you can quickly test whether the feature
+  works.
+\end{bullets}
+\end{region}
+
+\begin{region}[pitch=17.6]{733.3}
+If everything works, the paddle should be invulnerable to bombs for
+10~seconds after destroying a \code{SHIELD} brick -- and glow bright white
+while doing so \emoji{26A1}
+\end{region}
+
+\nextpage
+%% ==================================================================== 11 ==
+\begin{region}{69.4}
+\heading{Step 9: Countermeasures}
+\end{region}
+
+\begin{region}[pitch=14.3]{96.9}
+\textbf{Wouldn't it be great} if you could also \textbf{actively defend
+yourself against bombs} -- that is, simply \textbf{shoot them down} before
+they hit you?
+\end{region}
+
+\begin{region}{142.0}
+\emo{1F9E0}\textbf{Oh dear.}
+\end{region}
+
+\begin{region}[pitch=13.7]{158.7}
+Yes, that would be great\dots{} But \textbf{should you really, at the last
+minute,} build in yet another new feature instead of working through
+important items on the to-do list?\\
+No. \textbf{You shouldn't.}
+\end{region}
+
+\begin{region}{218.1}
+\emo{1F937}\textbf{Just like in real life\dots}
+\end{region}
+
+\begin{region}[pitch=14.3]{234.8}
+\dots{} we do it \textbf{anyway}. And actually, it is not that big a deal --
+it should \textbf{work exactly the same way} as shooting a space invader out
+of the sky.
+\end{region}
+
+\begin{region}{279.9}
+\emo{1F6E0}\textbf{The existing code in} \code{breakout.py}
+\end{region}
+
+\begin{region}{295.7}
+This is how space invaders are currently hit by balls or rockets:
+\end{region}
+
+\begin{region}[]{322.3}
+\begin{pycode}
+\kw{for} s \kw{in} Game.ships:
+    \kw{for} item  \kw{in} Game.balls + Game.rockets:
+        dist = math.hypot(item.x - s.x, item.y - s.y)
+        \kw{if} dist <= \num{15}:
+           s.hit = \fn{True}
+           item.hit = \fn{True}
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=14.2]{407.2}
+Thanks to the way of thinking sharpened in the HM (higher mathematics)
+lectures, we immediately recognize: if bombs are to be destroyed
+\textbf{exactly like} ships, then we simply have to \textbf{iterate over the
+bombs} as well.
+\end{region}
+
+\begin{region}{462.1}
+So it is enough to replace the loop:
+\end{region}
+
+\begin{region}[]{488.7}
+\begin{pycode}
+\kw{for} s \kw{in} Game.ships:
+\end{pycode}
+\end{region}
+
+\begin{region}{515.1}
+with:
+\end{region}
+
+\begin{region}[]{541.7}
+\begin{pycode}
+\kw{for} s \kw{in} Game.ships + Game.bombs:
+\end{pycode}
+\end{region}
+
+\begin{region}{569.0}
+\subheading{Task}
+\end{region}
+
+\begin{region}{599.9}
+Obvious, right? \textbf{Just do it}. \emoji{1F604}
+\end{region}
+
+\begin{region}{629.8}
+\heading{Step 10: Because there is still a little room here}
+\end{region}
+
+\begin{region}[pitch=13.25]{649.5}
+When all space invaders have been shot down, it gets boring -- after all, we
+want to play Breakout \textbf{and} Space Invaders. So let us quickly add the
+feature that a new space invader appears for every brick that is hit.
+\end{region}
+
+\begin{region}{694.9}
+In \code{bricktype.py}, add the following line at the very beginning of the
+method \code{effect()}:
+\end{region}
+
+\begin{region}[]{714.0}
+\begin{pycode}
+Game.ships.append(Ship(\num{0}))
+\end{pycode}
+\end{region}
+
+\begin{region}{731.6}
+That should actually be enough.\\
+Just test it.
+\end{region}
+
+\begin{region}{759.9}
+If some import thingy is missing, an error message will tell you
+\emoji{1F609}
+\end{region}
+
+\nextpage
+%% ==================================================================== 12 ==
+\begin{region}{69.4}
+\heading{Step 11: Take a look at the clock \dots}
+\end{region}
+
+\begin{region}[pitch=13.7]{87.2}
+\dots{} maybe we should start with one of the important features. So let us
+pause briefly and think: \textbf{What absolutely belongs in a game like
+Breakout + Space Invaders?} Perhaps that you only have a limited number of
+lives -- and fight to get to the next level before all lives are used up. In
+other words, exactly what makes university studies, with their limited number
+of permitted exam attempts, so exciting.
+\end{region}
+
+\begin{region}{160.5}
+Okay, how do we start? In any case, we need to \textbf{keep track} of two
+important things:
+\end{region}
+
+\begin{region}[pitch=14.2]{173.9}
+\begin{dashlist}
+\item the number of \textbf{lives}
+\item the current \textbf{level}
+\end{dashlist}
+\end{region}
+
+\begin{region}{211.1}
+\emo{1F9F1}\textbf{In game.py}
+\end{region}
+
+\begin{region}{226.9}
+Add two new attributes to the class Game:
+\end{region}
+
+\begin{region}[pitch=13.2]{244.7}
+\begin{pycode}
+\kw{class} \fn{Game}:
+    \cmt{\# ... other attributes as before}
+\end{pycode}
+\end{region}
+\begin{region}[]{269.9}
+\begin{pycode}
+    lifes = \num{0}
+    level = \num{0}
+\end{pycode}
+\end{region}
+
+\begin{region}{303.5}
+\emo{1F5BC}\textbf{And then: showing where things stand}
+\end{region}
+
+\begin{region}[pitch=13.35]{319.5}
+So that you can also see what situation you are in, we display \code{level}
+and \code{lifes} in the top left corner of the window. Luckily, you have
+already seen today how to render text -- so you can, e.g., add the following
+at the end of the \code{draw()} method:
+\end{region}
+
+\begin{region}[pitch=13.2]{365.2}
+\begin{pycode}
+    \kw{def} \fn{draw}():
+        \cmt{\# ... everything as before}
+\end{pycode}
+\end{region}
+\begin{region}[]{390.4}
+\begin{pycode}
+        label = f\num{"Level \{Game.level\} Lifes \{Game.lifes\}"}
+        text = Game.font.render(label, \fn{True}, (\num{255}, \num{255}, \num{255}))
+        text\_rect = text.get\_rect(topleft=(\num{10}, \num{10}))
+        Game.screen.blit(text, text\_rect)
+\end{pycode}
+\end{region}
+
+\begin{region}{448.0}
+\emo{1F9EA}\textbf{Test}
+\end{region}
+
+\begin{region}[pitch=14.3]{470.2}
+Once you have made these two changes, you should see in the top left corner
+that you have \textbf{0 lives} and are at \textbf{level 0}. Sounds sobering
+at first -- but: \textbf{it is a start}.
+\end{region}
+
+\begin{region}{507.6}
+\emo{1F501}\textbf{And now: an endless loop}
+\end{region}
+
+\begin{region}[pitch=13.4]{528.7}
+Now we want to let the game \textbf{keep running robustly}, i.e., build in a
+simple restart mechanism:
+\end{region}
+
+\begin{region}[pitch=13.33]{554.7}
+\begin{dashlist}
+\item When you have no lives left, the game starts over from the beginning.
+  For example, with 3 lives at level~1
+\item When there is no ball left in the game, you lose a life (if you still
+  have one), and a new ball comes into play.
+\end{dashlist}
+\end{region}
+
+\begin{region}{616.6}
+\emo{1F527}\textbf{Implementation in} \code{breakout.py}
+\end{region}
+
+\begin{region}[pitch=13.5]{637.1}
+Start with an empty ball list, \code{Game.balls = []}, and implement the
+idea inside the main loop (e.g., directly after \code{while running:}) as
+follows:
+\end{region}
+
+\begin{region}[]{677.2}
+\begin{pycode}
+    \kw{if} \fn{len}(Game.balls) == \num{0}:
+        \kw{if} Game.lifes > \num{1}:
+            Game.lifes -= \num{1}
+        \kw{else}:
+            Game.lifes = \num{3}
+            Game.level = \num{1}
+            Wall.init(BrickType)
+        Game.balls.append(Ball(\num{400}, \num{0}, -\num{2}, \num{6}))
+\end{pycode}
+\end{region}
+
+\nextpage
+%% ==================================================================== 13 ==
+\begin{region}{82.6}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.15]{109.1}
+\begin{tasks}
+\item[1.] Implement the changes described above and test the game. You
+  should now start with 3 lives at level 1 (that is already an
+  improvement). When all balls have been lost, you lose a life.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.17]{148.6}
+\begin{tasks}[start=2]
+\item[2.] Great, you can now lose lives -- but not gain any yet. That may be
+  how it is in real life, but in a game you want more. For example: that you
+  move up to the next level when all bricks have been cleared -- and then
+  face an even greater challenge, such as an additional row of bricks.
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{207.0}
+To do this, change the \code{init} method in \code{wall.py} so that the
+number of brick rows corresponds to the current level:
+\end{region}
+
+\begin{region}[x=74.7,pitch=13.2]{239.2}
+\begin{pycode}
+\kw{def} \fn{init}(BrickType):
+     Wall.BrickType = BrickType
+     Wall.brick = numpy.zeros((Game.brick\_rows, Game.brick\_cols))
+     \kw{for} i \kw{in} \fn{range}(\num{4}, \num{4} + Game.level):
+         \kw{for} j \kw{in} \fn{range}(\num{0}, Game.brick\_cols):
+             \kw{if} random.randint(\num{1}, \num{100}) <= \num{20}:
+                 ty = random.randint(\num{2}, \fn{max}(Wall.BrickType))
+             \kw{else}:
+                 ty = \num{1}
+             Wall.brick[i, j] = ty
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{377.0}
+In \code{breakout.py}, first remove the old initialization with
+\code{Wall.init(BrickType)}. Instead, you can now regularly check in the main
+loop how many bricks are still in play. When none are left, you move up a
+level:
+\end{region}
+
+\begin{region}[x=74.7,pitch=13.2]{422.3}
+\begin{pycode}
+\kw{if} Wall.brick.sum() == \num{0}:
+    Game.level += \num{1}
+    Wall.init(BrickType)
+\end{pycode}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{467.7}
+The method \code{sum} comes from \code{numpy}, which -- as you know -- is a
+wrapper for a very efficient C/C++ library for numerical linear algebra.
+Computing the sum of all matrix elements is extremely efficient. So it is
+not worth counting separately on the Python side how many bricks are still
+left. The code is short, clear, and performant.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{524.9}
+Make these changes and test the game. You now start with one row of bricks.
+If you manage to clear it completely, you move up a level and face a new
+wall with an additional row. If you have lost all lives, you start again
+with 3 lives at level 1.
+\end{region}
+
+\begin{region}{591.7}
+\heading{Step 12: Since there is still room, here's something for your ears}
+\end{region}
+
+\begin{region}[pitch=13.2]{609.4}
+Unfortunately, the PCs in the lab rooms have no speakers. But there are
+headphones! And anyone who feels like giving the game a bit more punch can
+now add sound effects.
+\end{region}
+
+\begin{region}[pitch=13.2]{640.1}
+With pygame, this is very easy. A sound object is created from an audio file
+-- and you can play it with .play() whenever you feel like it.
+\end{region}
+
+\begin{region}{670.8}
+For example, in game.py in the init method:
+\end{region}
+
+\begin{region}[pitch=13.2]{688.7}
+\begin{pycode}
+Game.exploding = pygame.mixer.Sound(\num{"data/exploding.wav"})
+Game.bounce = pygame.mixer.Sound(\num{"data/bounce.mp3"})
+\end{pycode}
+\end{region}
+\begin{region}[]{713.9}
+\begin{pycode}
+Game.launch = pygame.mixer.Sound(\num{"data/launch.wav"})
+\end{pycode}
+\end{region}
+
+\begin{region}{730.0}
+When, e.g., a rocket is fired, the matching clip can then be played like
+this:
+\end{region}
+
+\begin{region}[]{747.8}
+\begin{pycode}
+Game.launch.play()
+\end{pycode}
+\end{region}
+
+\begin{region}[pitch=13.1]{765.5}
+There is no more room for explanations here -- but that does not matter,
+because at this point, your enthusiasm for experimenting is called for. Think
+about where else sound effects could be played.
+\end{region}
+
+\nextpage
+%% ==================================================================== 14 ==
+\begin{region}{69.4}
+\heading{Step 13: Oh yes, the repository \dots}
+\end{region}
+
+\begin{region}[pitch=17.5]{87.2}
+If anyone has made it this far: it is about time to commit the
+changes to the repository -- unless you have already come up with that idea
+yourselves anyway \emoji{1F609}
+\end{region}
+
+\begin{region}[pitch=13.2]{133.9}
+\begin{pycode}
+git add *.py
+git commit -a -m "about time"
+git push
+\end{pycode}
+\end{region}
+
+\begin{region}{200.5}
+\heading{Step 14: And then there is the matter of the controller}
+\end{region}
+
+\begin{region}[pitch=13.15]{218.2}
+In the lab, we have provided you (unless we forgot) with a game controller
+with a BNO055 sensor. With it, you can steer the paddle casually with a
+flick of your wrist.
+\end{region}
+
+\begin{region}[pitch=13.18]{270.9}
+It should be surprising -- or maybe not -- that you did not have to adapt
+your Python code for reading the serial interface at all. Why? Because it
+makes no difference at all whether the microcontroller reads a potentiometer
+or another sensor -- as long as it sends the data over the serial interface
+using the same protocol, everything works as before.\\
+If you want the matching microcontroller code for the BNO055:
+\end{region}
+
+\begin{region}[]{350.2}
+\begin{pycode}
+git clone git@github.com:michael-lehn/asp-ulm-bno055.git
+\end{pycode}
+\end{region}
+
+\begin{region}{376.6}
+The Makefile works the way you know it by now:
+\end{region}
+
+\begin{region}[pitch=13.5]{402.5}
+\begin{dashlist}
+\item \code{make} compiles the code
+\item \code{make upload} compiles and flashes
+\item \code{make monitor} starts the serial monitor
+\end{dashlist}
+\end{region}
+
+\begin{region}{470.7}
+\heading{Step 15: And here there would still be room \dots}
+\end{region}
+
+\begin{region}[pitch=13.2]{493.9}
+\dots{} for a long to-do list with refactoring, clean code, a menu, a high
+score, and options.\\
+Or for a few closing words about the path we have taken.
+\end{region}
+
+\begin{region}{524.6}
+But honestly: I like neither to-do lists nor goodbyes \emoji{1F604}
+\end{region}
+
+\end{document}
