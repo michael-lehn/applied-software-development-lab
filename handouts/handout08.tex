@@ -204,7 +204,7 @@ One possible way is the top-down approach:
 
 \begin{region}[pitch=13.93]{283.7}
 You may notice: some modules such as \code{controller.py} or
-\code{serial_reader.py} are \textbf{not used at all} when the game starts.
+\code{serial-reader.py} are \textbf{not used at all} when the game starts.
 This is not a mistake -- these files concern the \textbf{serial connection},
 which will later allow you to control the game with a \textbf{game
 controller} instead of the keyboard.
@@ -347,7 +347,7 @@ The curve is parametrized by time (with $t$ as the time) and reads:
 \end{region}
 
 \begin{region}{673.1}
-\centering $x(t) = x_0 + a\cdot\cos t,\quad y(t) = y_0 + b\cdot\sin 2t$
+\centering $x(t) = x_0 + a\cdot\cos t,\quad y(t) = y_0 + \tfrac{b}{2}\cdot\sin 2t$
 \end{region}
 
 \begin{region}{700.9}
@@ -356,10 +356,10 @@ This means: the spaceship moves within a rectangle with the corners:
 
 \begin{region}[pitch=18.37]{717.1}
 \begin{dashlist}
-\item \textbf{Top left:} $(x_0-a, y_0-b)$
-\item \textbf{Bottom left:} $(x_0-a, y_0+b)$
-\item \textbf{Bottom right:} $(x_0+a, y_0+b)$
-\item \textbf{Top right:} $(x_0+a, y_0-b)$
+\item \textbf{Top left:} $(x_0-a, y_0-b/2)$
+\item \textbf{Bottom left:} $(x_0-a, y_0+b/2)$
+\item \textbf{Bottom right:} $(x_0+a, y_0+b/2)$
+\item \textbf{Top right:} $(x_0+a, y_0-b/2)$
 \end{dashlist}
 \end{region}
 
@@ -781,7 +781,7 @@ class |\cy{Wall}|:
     \begin{dlist}
     \item width \code{w = 80}, height \code{h = 20}
     \item top left corner at \code{x = j * w}, \code{y = i * h}
-    \item slightly shifted (\code{+1}) and reduced in size (\code{-2}) for
+    \item slightly shifted (\code{+1}) and reduced in size (\code{-1}) for
       visible gaps
     \end{dlist}
   \end{dlist}
