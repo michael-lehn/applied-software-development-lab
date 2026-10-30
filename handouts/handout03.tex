@@ -273,9 +273,10 @@ with:
 \begin{region}[x=74.7,right=0,pitch=12.47]{585.3}
 The instruction \code{sbc} \textit{(Subtract with Carry)} works like
 \code{sbci} \textit{(Subtract Immediate with Carry)}, except that the second
-operand here is a register instead of an immediate value. Register \code{r1}
-is automatically initialized with 0 on every reset. As long as you do not
-change it yourself, it therefore always contains the value 0.
+operand here is a register instead of an immediate value. The compiler uses
+register \code{r1} as a zero register: it assumes that \code{r1} always
+contains 0 and never changes it. So as long as you do not change it
+yourself, it always contains the value 0.
 \end{region}
 
 \begin{region}[x=74.7,right=0,pitch=12.1]{635.6}
@@ -727,13 +728,13 @@ code -- especially for larger projects.
 In the last example, the LED should blink at 1\,Hz again. To do this, we
 insert a delay at the right place in the loop that waits for half a second
 each time -- this results in a complete cycle of one second (1\,Hz). The
-required number of clock cycles can be calculated:
+required counter value (number of loop iterations) can be calculated:
 \end{region}
 
 \begin{region}[x=92.7,right=0]{303.6}
 \fontsize{13.2bp}{14bp}\selectfont
 $n = \dfrac{\frac{500000000}{62.5} - 7}{6} = 1333332$
-{\normalsize cycles}
+{\normalsize iterations}
 \end{region}
 
 \begin{region}{338.9}
