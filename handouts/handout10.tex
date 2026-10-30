@@ -1,0 +1,1179 @@
+% Applied Software Development Lab -- Lab Handout 10: Now with Moving Pictures!
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 10".
+\documentclass{aslab}
+\sethandout{10}{Now with Moving Pictures!}
+\graphicspath{{../figures/handout10/}{../figures/shared/}}
+
+% syntax colors of the code listings (used via escapechar=`)
+\definecolor{codemaroon}{HTML}{970E53}
+\newcommand*\Kw[1]{\textcolor{codeorange}{#1}}  % keywords
+\newcommand*\Cy[1]{\textcolor{codecyan}{#1}}    % constants, names
+\newcommand*\Nu[1]{\textcolor{codered}{#1}}     % numbers, strings
+\newcommand*\Mg[1]{\textcolor{codemagenta}{#1}} % import
+\newcommand*\Cm[1]{\textcolor{codepurple}{#1}}  % comments
+\newcommand*\Bl[1]{\textcolor{aslabblue}{#1}}   % comments (p. 5), misc.
+\newcommand*\St[1]{\textcolor{codemaroon}{#1}}  % string (p. 3)
+% code lines keep the region pitch even with tall or deep glyphs
+\makeatletter
+\lst@AddToHook{Init}{\lineskiplimit=-\maxdimen\relax}
+\makeatother
+% "•" lists with the text indented by 9bp
+\newlist{dotlist}{itemize}{2}
+\setlist[dotlist]{label={\textbullet},leftmargin=9bp,labelsep=*,align=left,
+  labelindent=0pt}
+% numbered tasks with a regular (non-bold) number
+\newlist{plaintasks}{enumerate}{1}
+\setlist[plaintasks]{label={\arabic*.},leftmargin=18bp,labelsep=*,
+  align=left,labelindent=0pt}
+% (a), (b) lists with a bold label
+\newlist{boldsteps}{enumerate}{1}
+\setlist[boldsteps]{label={\bfseries(\alph*)},leftmargin=18bp,labelsep=*,
+  align=left,labelindent=0pt}
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{124.0}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=13]{138.5}
+{\bfseries\color{aslabblue}
+\begin{dashlist}
+\item Refactoring (cleaning up is always part of it)
+\item Catching exceptions
+\item Avoiding data congestion when reading the serial interface
+\item And above all: bitmaps and new game features
+\end{dashlist}\par}
+\end{region}
+
+\begin{region}{204.5}
+\heading{Today's goal}
+\end{region}
+
+\begin{region}[pitch=13.2]{219.5}
+\begin{dashlist}
+\item The controller should be connectable and usable even while the game
+  is already running. But it should also be possible to remove it while the
+  game is running. This is already supported in part -- but only in part.
+\item If you turn the potentiometer quickly and use the push button at the
+  same time, the game may ``lag'' (yes, that's really what people say!). The
+  data you receive from the controller piles up. Even if you suddenly stop
+  turning the potentiometer, the paddle keeps moving for a while.
+\item Of course, a game also needs sound, e.g., when the ball bounces off,
+  when a spaceship is shot down, etc.
+\item A rocket should look like a rocket, a spaceship like a spaceship. In
+  short: some things should be displayed with bitmaps and not just with
+  geometric objects such as circles or rectangles.
+\item And then, of course, you need lots of new features, for example
+  spaceships that can drop bombs, bricks that have to be hit several times,
+  etc. And maybe you shouldn't have an unlimited supply of ammunition
+  either.
+\item This handout uses a few examples to show how such new features can be
+  implemented -- so that afterwards you can also implement your own ideas
+  on your own.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.18]{446.1}
+We will tackle these things in a seemingly arbitrary order. This is meant to
+show you what a typical process looks like in practice: at first, you only
+intend to add one improvement -- and then one thing leads to another. You
+discover places in the code that should be reorganized so that new features
+fit in better. You find bugs that were hidden so far. And you get ideas for
+the next feature that you didn't even have on your radar.
+\end{region}
+
+\placegraphic{148.9}{555.3}{297.5}{game-screenshot.png}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\heading{Preparation: part 1}
+\end{region}
+
+\begin{region}[pitch=13.3]{88.1}
+As usual, we work with two terminals: \textbf{left}: editing source code,
+\textbf{right}: compiling code, testing the game. Clone the repository with
+\end{region}
+
+\begin{region}{119.2}
+\code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}
+\end{region}
+
+\begin{region}{136.9}
+Then, in both terminals, change into the directory with the Python code:
+\end{region}
+
+\begin{region}{154.7}
+\code{cd asp-ulm/python}
+\end{region}
+
+\placegraphic{280.9}{170.6}{257.6}{breadboard-setup.png}
+
+\begin{region}[width=216]{177.4}
+\heading{Preparation: part 2}
+\end{region}
+
+\begin{region}[width=216,pitch=13.17]{195.1}
+You should build the familiar circuit with push button and potentiometer on
+the breadboard and connect it correctly to the microcontroller. The push
+button is connected to digital input pin~2, the potentiometer to analog
+input A0. On the right, you can see a picture of the complete setup.
+\end{region}
+
+\begin{region}{305.8}
+\heading{Preparation: part 3}
+\end{region}
+
+\begin{region}[pitch=13.45]{323.5}
+In the first step today, the rockets should no longer be drawn as simple
+filled circles but by an image. So that you don't have to draw the images
+yourselves, I have created a Git repository with additional material.
+\textbf{However, it is a bit tricky} to add these files to your own
+repository in the end. Here are the instructions:
+\end{region}
+
+\begin{region}[pitch=13.3]{403.9}
+\begin{tasks}
+\item Make sure that you are in the subdirectory of your project. In the
+  terminal, enter \code{pwd}. This prints the current directory.\\
+  On the lab computers, this should be \code{/home/asp/asp-ulm/python}.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=17.8]{443.8}
+\begin{tasks}[start=2]
+\item Clone my repository with the additional material:\\
+  \code{git clone https://github.com/michael-lehn/asp-ulm-data.git}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.2]{479.5}
+This creates a new subdirectory \code{asp-ulm-data}.\\
+\textbf{Confirm this} by displaying the content of the current directory with
+\code{ls}.
+\end{region}
+
+\begin{region}[pitch=13.5]{507.3}
+\begin{tasks}[start=3]
+\item Rename the folder to \code{data}: \code{mv asp-ulm-data data}\\
+  Use \code{ls} again to display what is in the current directory, and
+  confirm that the subfolder is now called \code{data}.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=17.8]{547.6}
+\begin{tasks}[start=4]
+\item Now comes the delicate part, because something gets deleted. First
+  use\\
+  \code{ls -a data}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.25]{583.0}
+to display everything that is in the folder. It should contain useful things
+such as image and sound files, but also a directory \code{.git}. And exactly
+this \code{.git} has to go! It contains administrative files because this
+directory was originally cloned from my repository. You don't want to drag
+this stuff along.\\
+To do so, run:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.7]{653.9}
+\code{rm -rf data/.git}\\
+If you then run\\
+\code{ls -a data}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{707.2}
+again, \code{.git} should be gone.
+\end{region}
+
+\begin{region}[pitch=17.8]{720.5}
+\begin{tasks}[start=5]
+\item Now add the folder with its entire content to your own repository:\\
+  \code{git add data/*}
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{751.8}
+\code{git commit -a -m "images and sound files"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\heading{Step 1: Finally, here we go -- with images!}
+\end{region}
+
+\begin{region}[pitch=13.3]{87.4}
+Connect the microcontroller and run \code{usb_check}.\\
+Then open the file \code{ship.py} with the class \code{Ship}, which is
+responsible for the spaceships.\\
+They should no longer be drawn as simple filled circles, but look like in
+Space Invaders.
+\end{region}
+
+\begin{region}{145.2}
+In the constructor (i.e., the \code{__init__} method), add the following new
+line:
+\end{region}
+
+\begin{region}{163.1}
+\begin{codeblock}[escapechar=`]
+self.img = pygame.image.load(`\St{"data/space\_invader0.png"}`)
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.35]{180.7}
+This gives every Ship object a new attribute img, which is initialized with
+an image object. And the image object was created by loading the file
+\code{data/space_invader0.png}.
+\end{region}
+
+\begin{region}[pitch=13.3]{225.2}
+Now this image should be drawn instead of the circle. So change the method
+\code{draw} so that it contains only this line:
+\end{region}
+
+\begin{region}{256.3}
+\tcode{pygame.Surface.blit(Game.screen, self.img, (self.x, self.y))}
+\end{region}
+
+\begin{region}[pitch=13.2]{274.2}
+The \code{blit} method copies an image (more precisely: a \code{Surface}
+object) to a specific position on another surface, here the screen. This
+lets you display arbitrary images instead of simple shapes.
+\end{region}
+
+\begin{region}{322.5}
+\emoji{1F4A5} \textbf{Fun fact: where does ``BitBlt'' come from?}
+\end{region}
+
+\begin{region}[pitch=13.42]{339.2}
+The term \textbf{BitBlt} (bit block transfer) comes from the legendary Xerox
+PARC research labs of the 1970s. That is where the graphical user interface
+(GUI) as we know it today was developed -- with windows, icons, and mouse
+pointers. To display all of this smoothly, a fast method was needed to copy
+image data from one memory location to another. That was the birth of the
+\textbf{BitBlt function} -- and the word \textbf{blit} has survived to this
+day as a short form in many graphics libraries (such as Pygame).
+\end{region}
+
+\begin{region}{424.8}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.5]{438.4}
+\begin{plaintasks}
+\item Test the new feature by running \code{python breakout.py}.
+\item As mentioned above, \code{blit()} is a method -- namely of the class
+  \code{pygame.Surface}. Both \code{self.img} and \code{Game.screen} are
+  objects of this class. Now change the line in the \code{draw} method to:
+\end{plaintasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{494.6}
+\tcode{Game.screen.blit(self.img, (self.x, self.y))}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.27]{515.1}
+This does \textbf{exactly the same} as before. Internally, Python more or
+less rewrites it into what was there before. In the new form, however, it is
+clearer what is meant: \textbf{The blit method is applied to the Game.screen
+object to copy the self.img object to the position (self.x, self.y).}
+\end{region}
+
+\begin{region}[pitch=13.44]{571.2}
+\begin{plaintasks}[start=3]
+\item We still have a small cosmetic flaw: the images of the space invaders
+  are currently drawn such that \code{(self.x, self.y)} is the top-left
+  corner of the image.\\
+  Concretely, this means, e.g., that rockets seem to ``fly through'' when
+  you hit the image on its right side with a rocket. At the same time, the
+  space invaders are already shot down when the rocket actually flies past
+  them on the left.\\
+  \textbf{Test this!} We don't want to solve problems that we don't know
+  exactly.
+\end{plaintasks}
+\end{region}
+
+\begin{region}[pitch=13.2]{651.9}
+\begin{plaintasks}[start=4]
+\item To correct this, change the code in the \code{draw} method to:
+\end{plaintasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{669.8}
+\begin{codeblock}
+pos = self.img.get_rect()
+pos.center = (self.x, self.y)
+Game.screen.blit(self.img, pos)
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.45]{713.8}
+The \code{get_rect()} method returns an object of type \code{pygame.Rect}.\\
+Such objects represent rectangles (in this case, the border of the image) and
+can be centered by overwriting their center attribute.\\
+\textbf{Test whether this solves the problem}. If so, then:\\
+\code{git commit -a -m "image for space invader"}\\[-0.4bp]
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{82.6}
+\heading{Step 2: More images}
+\end{region}
+
+\begin{region}[pitch=13.2]{100.6}
+Open the file \code{rocket.py} with the class \code{Rocket}, which is
+responsible for the rockets. They should now, of course, look like real
+rockets!
+\end{region}
+
+\begin{region}{140.2}
+Task
+\end{region}
+
+\begin{region}[pitch=13.4]{153.3}
+\begin{tasks}
+\item You have seen how it worked for the spaceships. Do the same for the
+  rockets and use the image \code{data/rocket0.png} for it.
+\item If you transferred the concept directly, the images of the rockets are
+  currently aligned at their center.\\
+  For rockets, this is actually not quite right -- as with a soldering iron,
+  it is the \textbf{tip} that is the dangerous part. Here, however, it is
+  harder to test whether a space invader is only hit when it is (currently)
+  really caught by the middle of the rocket. So let's briefly throttle the
+  game speed a little so that such details can be seen better.\\
+  In \code{breakout.py}, change the line:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.7]{291.5}
+\tcode{time.sleep(1/30)}\\
+to:\\
+\tcode{time.sleep(1)}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.17]{344.6}
+Then only one frame per second is drawn -- so we see everything in slow
+motion. If you start the game now, you should immediately see that when a
+rocket is launched, half of it already sticks out of the paddle (our
+``launch pad'').\\
+Now, in rocket.py, change the line:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.75]{401.9}
+\tcode{pos.center = (self.x, self.y)}\\
+to:\\
+\tcode{pos.midtop = (self.x, self.y)}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{455.0}
+If you now restart the game, you will see that the rocket is aligned at its
+tip (the dangerous part).
+\end{region}
+
+\begin{region}[pitch=13.45]{481.3}
+\begin{tasks}[start=3]
+\item Since you are currently running the game in slow motion, you may
+  notice a problem that was hidden before: the controls are sluggish --
+  people say they \textbf{lag} (\textit{lag} = delay).\\
+  If you quickly turn the potentiometer back and forth and then let go, the
+  paddle still keeps moving back and forth for a while.\\
+  This is a typical problem when data is produced and processed at different
+  rates (in electronics, this is called \textit{crossing clock domains}).\\
+  We will take care of this in the next step.\\
+  If everything else works (and you have observed the problem that we will
+  solve in the next step), then:\\
+  \code{git commit -a -m "rocket image"}\\
+  \code{git push}
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\heading{Step 3: Processing data from the controller faster}
+\end{region}
+
+\begin{region}[pitch=13.2]{87.4}
+There you will find the code that reads and processes data from the serial
+interface (via our module \code{controller}).\\
+It should look roughly like this:
+\end{region}
+
+\begin{region}[pitch=12]{140.5}
+\begin{codeblock}[escapechar=`]
+ser_data = controller.readdata()
+`\Kw{if}` ser_data:
+    `\Kw{if}` ser_data[`\Nu{0}`] == `\Nu{"A"}`:
+        rockets.append(Rocket(Paddle.x + Paddle.w // `\Nu{2}`, Paddle.y, -`\Nu{10}`))
+    `\Kw{elif}` ser_data[`\Nu{0}`] == `\Nu{"X"}`:
+        Paddle.set(ser_data[`\Nu{1}`] * `\Nu{1.5}`)
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.8]{226.3}
+\textbf{The problem:} This code is executed \textbf{only once per frame},
+but the serial interface delivers data \textbf{much faster}.\\
+As a result, data ``piles up'', as you saw in the last step.
+\end{region}
+
+\begin{region}{280.3}
+Fortunately, in our case the problem can be solved very easily by changing
+the code to:
+\end{region}
+
+\begin{region}[pitch=12]{300.3}
+\begin{codeblock}[escapechar=`]
+`\Kw{while}` `\Cy{True}`:
+    ser_data = controller.readdata()
+    `\Kw{if}` ser_data is `\Cy{None}`:
+        `\Kw{break}`
+    `\Kw{if}` ser_data[`\Nu{0}`] == `\Nu{"A"}`:
+        rockets.append(Rocket(Paddle.x + Paddle.w // `\Nu{2}`, Paddle.y, -`\Nu{10}`))
+    `\Kw{elif}` ser_data[`\Nu{0}`] == `\Nu{"X"}`:
+        Paddle.set(ser_data[`\Nu{1}`] * `\Nu{1.5}`)
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.15]{409.2}
+This way, the data is processed practically immediately: the loop reads data
+until no new data is available and processes it right away -- e.g., by
+creating new rockets or setting the paddle position.
+\end{region}
+
+\begin{region}{462.8}
+\subheading{Task:}
+\end{region}
+
+\begin{region}[pitch=13.73]{490.2}
+\begin{tasks}
+\item Check that with this change the game is \textbf{still very sluggish}
+  -- but only because we still draw \textbf{only one frame per second}.\\
+  The delays caused by the data processing, however, are gone.\\
+  If you now quickly turn the potentiometer and then stop, the paddle is
+  drawn \textbf{immediately at the new position} in the next frame and then
+  stays there.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.3]{558.4}
+\begin{tasks}[start=2]
+\item Of course, we now want to play with at least 30 frames per second
+  again.\\
+  But this time we do it properly and no longer use \code{time.sleep()},
+  but the Clock that Pygame provides for this purpose.\\
+  It is used according to this pattern:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{624.9}
+\begin{codeblock}[escapechar=`]
+clock = pygame.time.Clock()
+`\Kw{while}` running:
+    `\Bl{\# here comes the code to handle events}`
+    `\Bl{\# and to draw a frame}`
+
+    `\Bl{\# and at the end of the loop:}`
+    clock.tick(`\Nu{30}`)
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.1]{743.4}
+Apply this pattern and check that the game now runs smoothly again --
+possibly even more smoothly than before.
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}[x=74.7,right=0]{82.6}
+\subheading{What is behind this?}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{97.4}
+\begin{dotlist}
+\item Before the main loop, a Clock object is created. This object
+  internally stores the current time.
+\item When you call the method tick(30), it checks:
+  \begin{dotlist}
+  \item \textbf{If less than 1/30 of a second has passed since the stored
+    time}, it blocks briefly until the time span is over, and then stores
+    the new current time.
+  \item \textbf{If enough time has already passed}, it simply stores the
+    current time and continues immediately.
+  \end{dotlist}
+\end{dotlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.75]{204.4}
+\subheading{What is the advantage?}
+Drawing does not always take exactly the same amount of time!\\
+How long it takes depends, e.g., on how many space invaders or balls are
+currently in the game, or on whether an object has just been hit.\\
+As a rule, however, drawing takes considerably \textbf{less} than 1/30 of a
+second.\\
+This mechanism ensures that a frame is always redrawn \textbf{after the same
+time span} -- regardless of how much is going on.
+\end{region}
+
+\begin{region}[pitch=13.45]{300.1}
+\begin{tasks}[start=3]
+\item If everything works, into the repository with it:\\
+  \code{git commit -a -m "fixed lag and used clock"}\\
+  \code{git push}
+\end{tasks}
+\end{region}
+
+\begin{region}{383.8}
+\heading{Step 4: Explosions \emoji{1F4A5}}
+\end{region}
+
+\begin{region}[pitch=13.3]{404.0}
+After the boring data processing, we need some action -- the space invaders
+should explode when they are hit!\\
+As luck would have it, \code{data/explosion.png} already provides a suitable
+image for this.
+\end{region}
+
+\begin{region}[pitch=13.5]{457.3}
+The first approach is to check in the \code{draw()} method of the Ship class
+whether the attribute \code{alive} has the value \code{True} or
+\code{False}.\\
+If it is \code{True}, the ``normal'' image is displayed -- otherwise the one
+with the explosion.\\
+Open the file \code{ship.py} and add the following line in the constructor
+(i.e., the \code{__init__} method):
+\end{region}
+
+\begin{region}{515.3}
+\begin{codeblock}[escapechar=`]
+self.die = pygame.image.load(`\Nu{"data/explosion.png"}`)
+\end{codeblock}
+\end{region}
+
+\begin{region}{544.9}
+Then change the \code{draw} method as follows:
+\end{region}
+
+\begin{region}[pitch=12]{571.5}
+\begin{codeblock}[escapechar=`]
+`\Kw{def}` `\Cy{draw}\Bl{(self):}`
+    `\Kw{if}` self.alive:
+        img = self.img
+    `\Kw{else}`:
+        img = self.die
+    pos = img.get_rect()
+    pos.center = (self.x, self.y)
+    Game.screen.blit(img, pos)
+\end{codeblock}
+\end{region}
+
+\begin{region}{693.4}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=14.1]{718.7}
+\begin{tasks}
+\item Make the change and test whether it works. You should notice that the
+  program runs \textbf{without errors}, but \textbf{no explosions are
+  displayed}.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.55]{747.0}
+\begin{tasks}[start=2]
+\item \textbf{Why are no explosions displayed?}\\
+  The problem is: a spaceship is no longer drawn at all when its
+  \code{alive} attribute is \code{False}.
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}[x=74.7,right=0,pitch=13.2]{68.8}
+Have a look at the file \code{breakout.py} -- in the main loop, there is a
+line like this one:
+\end{region}
+
+\begin{region}[x=74.7,right=0]{95.4}
+\begin{codeblock}[escapechar=`]
+ships = [item `\Kw{for}` item `\Kw{in}` ships `\Kw{if}` item.alive]
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.75]{122.1}
+Here, \code{ships} is the list of spaceships that are drawn. When a ship has
+been hit, it is removed from the list \textbf{immediately} -- and therefore
+no longer appears for a last ``explosion frame''.
+\end{region}
+
+\begin{region}[x=74.7,right=0]{176.9}
+\subheading{This is how we solve the problem:}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.2]{204.4}
+\begin{boldsteps}
+\item \textbf{Marking hits differently}\\
+  In \code{breakout.py}, find the place where a hit has so far been handled with:
+\end{boldsteps}
+\end{region}
+
+\begin{region}[x=92.7,right=0,pitch=17.75]{236.6}
+\tcode{s.alive = }{\ttfamily\Cy{False}}\\
+Change it to:\\
+\tcode{s.hit = }{\ttfamily\Cy{True}}
+\end{region}
+
+\begin{region}[x=92.7,right=0,pitch=13.2]{290.7}
+\textbf{Tip}: Test right away whether the program still runs without errors
+-- that way you catch typos early. But don't be surprised: for now, the space
+invaders are invulnerable -- we are not done yet!
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{331.3}
+\begin{boldsteps}[start=2]
+\item \textbf{Initializing and using the \codearg{\mdseries hit}
+  attribute}\\
+  In \code{ship.py}, initialize the new attribute in the constructor:
+\end{boldsteps}
+\end{region}
+
+\begin{region}[x=92.7,right=0,pitch=17.9]{362.7}
+\tcode{self.hit = }{\ttfamily\Cy{False}}\\
+In the \code{draw} method, change the code as follows:
+\end{region}
+
+\begin{region}[x=96.7,right=0,pitch=12]{398.2}
+\begin{codeblock}[escapechar=`]
+`\Kw{def}` `\Cy{draw}\Bl{(self):}`
+    `\Kw{if}` self.hit:
+        img = self.die
+        self.alive = `\Cy{False}`
+    `\Kw{else}`:
+        img = self.img
+    pos = img.get_rect()
+    pos.center = (self.x, self.y)
+    Game.screen.blit(img, pos)
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=92.7,right=0,pitch=13.7]{517.8}
+Test whether explosions are displayed now!\\
+A space invader that has been hit should remain visible as an explosion for
+\textbf{exactly one frame} before it disappears from the list (and from
+life).
+\end{region}
+
+\begin{region}[pitch=15.5]{562.7}
+\begin{plaintasks}[start=3]
+\item Now that a solution has been spoon-fed to you, you may solve something
+  on your own again! \emoji{1F604}\\[-1.2bp]
+  When a rocket hits a space invader, \textbf{the rocket should explode,
+  too}.\\[-1.2bp]
+  When a ball hits the space invader, the ball should \textbf{not} explode.
+\end{plaintasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{621.1}
+\textbf{A possible approach (analogous to the previous subtask)}:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.1]{635.4}
+\begin{steps}
+\item In \code{breakout.py}, the attribute hit is set not only for the ship
+  that was hit, \textbf{but also for the object that caused the hit}.
+\item In the \code{Ball} class, the \code{hit} attribute is ignored.\\
+  In the \code{Rocket} class, it is \textbf{handled the same way as in the
+  Ship class}.
+\end{steps}
+\end{region}
+
+\begin{region}[pitch=13.3]{690.8}
+\begin{plaintasks}[start=4]
+\item If everything works, into the repository with it:\\
+  \code{git commit -a -m "explosions"}\\
+  \code{git push}
+\end{plaintasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\heading{Step 5: Cleaning up the code}
+\end{region}
+
+\begin{region}[pitch=13.5]{87.4}
+Have a look at the file \code{wall.py}. Currently, it is rather ugly that
+things like the width and height of the bricks and also the maximum number
+of bricks per row and column appear \textbf{hard-coded} as constants.\\
+You probably feel the same way I did: I had to look at it for a while to
+understand what exactly was specified. So I have decoded it for you:
+\end{region}
+
+\begin{region}[pitch=14.2]{154.4}
+\begin{dashlist}
+\item A brick is \textbf{80 pixels wide} and \textbf{20 pixels high}.
+\item There are at most \textbf{10 brick columns} and \textbf{30 brick
+  rows}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.7]{183.2}
+Also have a look at the file \code{game.py} in the other terminal.\\
+There, the size of the drawing area is also hard-coded in the \code{init}
+method:\\
+\textbf{800 pixels wide}, \textbf{600 pixels high}.\\
+Fortunately, this fits together as it is currently specified:
+\end{region}
+
+\begin{region}[pitch=14.7]{237.5}
+\begin{dashlist}
+\item 80 pixels \texttimes\ 10 columns $\rightarrow$ 800 pixels wide.
+\item 20 pixels \texttimes\ 30 rows $\rightarrow$ 600 pixels high.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.33]{272.0}
+\subheading{Great, so everything is fine, right?}
+Well, yes. But what if you want to change the size of the bricks? Or want
+more bricks?\\
+Or what if you -- like me -- still want to understand the code in a few
+weeks?\\
+Let's organize it better! Change \code{game.py} as follows:
+\end{region}
+
+\begin{region}{329.9}
+\begin{codeblock}[escapechar=`]
+`\Mg{import}` `\Bl{pygame}`
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=12]{355.1}
+\begin{codeblock}[escapechar=`]
+`\Kw{class}` `\Cy{Game}`:
+    width, height = `\Cy{None}`, `\Cy{None}`
+    screen = `\Cy{None}`
+    brick_rows, brick_cols = `\Nu{30}`, `\Nu{10}`
+    brick_width, brick_height = `\Nu{80}`, `\Nu{20}`
+
+    `\Kw{def}` `\Cy{init}`():
+        Game.width = Game.brick_cols * Game.brick_width
+        Game.height = Game.brick_rows * Game.brick_height
+        pygame.init()
+        Game.screen = pygame.display.set_mode((Game.width, Game.height))
+
+    `\Kw{def}` `\Cy{quit}`():
+        pygame.quit()
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.2]{527.2}
+Now it is specified in one central place how large the bricks are and how
+many rows and columns there are at most.
+\end{region}
+
+\begin{region}{558.9}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.5]{576.8}
+\begin{tasks}
+\item Now it's your turn to make use of the new \code{Game} attributes in
+  \code{wall.py}:
+  \begin{dotlist}
+  \item Replace every occurrence of \code{30} with \code{Game.brick_rows}.
+  \item Replace every occurrence of \code{10} with \code{Game.brick_cols}.
+  \item Replace every occurrence of \code{80} with \code{Game.brick_width}.
+  \item Replace every occurrence of \code{20} with
+    \code{Game.brick_height}.
+  \end{dotlist}
+  Then test whether everything still works!
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.4]{657.5}
+\begin{tasks}[start=2]
+\item Also check whether you can change the new constants in \code{game.py}
+  and everything still works. For example, change \code{Game.brick_cols} to
+  \code{15}. Test whether the game still works then.
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=17.5]{697.5}
+\begin{tasks}[start=3]
+\item Afterwards, undo the change -- a drawing area of 800 \texttimes\ 600
+  pixels is not bad if you want to play the game on a Raspberry Pi later
+  on. \emoji{1F604}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.4]{731.7}
+\begin{tasks}[start=4]
+\item If everything works:\\
+  \code{git commit -a -m "brick constants"}\\[-0.2bp]
+  \code{git push}
+\end{tasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}{82.6}
+\heading{Step 6: Even more code cleanup}
+\end{region}
+
+\begin{region}[pitch=13.2]{100.6}
+Have a look at the file \code{breakout.py}.\\
+The main loop is slowly getting quite large, because at the moment
+everything happens in it at once:
+\begin{dashlist}
+\item We poll the serial interface for new data.
+\item We poll Pygame for new key events.
+\item We draw and move balls, spaceships, and rockets.
+\item We check whether there are collisions.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.3]{193.8}
+Now at least the \textbf{drawing and moving} of balls, spaceships, and
+rockets should be organized better.
+\end{region}
+
+\begin{region}[pitch=13.23]{234.4}
+\subheading{Why?}
+\begin{boldsteps}
+\item The code is almost identical.
+\item When the spaceships also drop bombs later, another list of objects
+  will be added that have to be moved and drawn.
+\end{boldsteps}
+\end{region}
+
+\begin{region}{301.4}
+So: \textbf{Now is the right time to do this properly!}
+\end{region}
+
+\begin{region}[pitch=13.37]{327.8}
+And we'll do it completely right straight away:\\
+The lists of the objects that are moved and drawn -- i.e., \code{balls},
+\code{rockets}, and \code{ships} -- are moved into the Game class.\\
+There will also be a method \code{draw()} there that manages all of these
+lists.
+\end{region}
+
+\begin{region}{394.6}
+Change \code{game.py} as follows:
+\end{region}
+
+\begin{region}{421.3}
+\begin{codeblock}[escapechar=`]
+`\Mg{import}` `\Bl{pygame}`
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=12]{446.5}
+\begin{codeblock}[escapechar=`]
+`\Kw{class}` `\Cy{Game}`:
+    width, height = `\Cy{None}`, `\Cy{None}`
+    screen = `\Cy{None}`
+    brick_rows = `\Nu{30}`
+    brick_cols = `\Nu{15}`
+    brick_width = `\Nu{80}`
+    brick_height = `\Nu{20}`
+    balls = []
+    rockets = []
+    ships = []
+
+    `\Kw{def}` `\Cy{init}`():
+        Game.width = Game.brick_cols * Game.brick_width
+        Game.height = Game.brick_rows * Game.brick_height
+        pygame.init()
+        Game.screen = pygame.display.set_mode((Game.width, Game.height))
+
+    `\Kw{def}` `\Cy{draw}`():
+        `\Kw{for}` item `\Kw{in}` Game.balls + Game.rockets + Game.ships:
+            item.draw()
+            item.move()
+        Game.balls = [item `\Kw{for}` item `\Kw{in}` Game.balls `\Kw{if}` item.alive]
+        Game.rockets = [item `\Kw{for}` item `\Kw{in}` Game.rockets `\Kw{if}` item.alive]
+        Game.ships = [item `\Kw{for}` item `\Kw{in}` Game.ships `\Kw{if}` item.alive]
+
+    `\Kw{def}` `\Cy{quit}`():
+        pygame.quit()
+\end{codeblock}
+\end{region}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{95.8}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.55]{122.5}
+\begin{tasks}
+\item Adapt \code{breakout.py} so that the change takes effect:
+  \begin{dotlist}
+  \item Remove the code that has so far moved and drawn the balls,
+    spaceships, and rockets.\\
+    Instead, \code{Game.draw()} should now be called once.
+  \item All places where the lists \code{balls}, \code{rockets}, or
+    \code{ships} are still accessed directly must now be adapted as
+    well.\\
+    There, write, e.g., \code{Game.balls} instead of \code{balls}, etc.
+  \item Then test whether everything works again!
+  \end{dotlist}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.8]{217.0}
+\begin{tasks}[start=2]
+\item To see that this cleanup is useful, too, make another small change in
+  \code{wall.py}: whenever a brick is hit by a ball, a new space invader
+  should enter the game. \textbf{Sounds complicated?} Don't worry, this
+  \textbf{takes just two lines}:
+\end{tasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{258.2}
+\begin{boldsteps}
+\item At the beginning of the file, import the Ship class with
+  \code{from ship import Ship}
+\item When a brick has been hit, append a new Ship object to the list
+  Game.ships. To do this, find the line with \code{Wall.brick[i2, j2] = 0}
+  (which vaporizes a brick that has been hit) and insert the line
+\end{boldsteps}
+\end{region}
+
+\begin{region}[x=92.7,right=0,pitch=17.7]{315.9}
+\tcode{Game.ships.append(Ship(0))}\\
+below it.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{352.1}
+\textbf{Test whether this works:} every destroyed brick should now bring a
+new spaceship into the game.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{383.9}
+\subheading{If everything works:}
+\code{git commit -a -m "moving stuff is in Game"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ==================================================================== 11 ==
+\begin{region}{69.4}
+\heading{Step 7: A completely different construction site}
+\end{region}
+
+\begin{region}[pitch=13.38]{88.1}
+Test what happens when you \textbf{unplug the microcontroller while the game
+is running}.\\
+The program then crashes.\\
+According to the error message, the problem occurs in \code{controller.py},
+more precisely in the method \code{readline()}.\\
+It currently has this structure:
+\end{region}
+
+\begin{region}[pitch=12]{168.2}
+\begin{codeblock}[escapechar=`]
+`\Kw{def}` `\Cy{readline}`():
+    `\Kw{if}` Controller.ser `\Kw{is}` `\Cy{None}`:
+        `\Kw{return}` `\Cy{None}`
+
+    `\Kw{while}` Controller.ser.in_waiting > `\Nu{0}`:
+        `\Cm{\# code to read the serial interface}`
+
+    `\Kw{return}` `\Cy{None}`
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=13.53]{292.1}
+\subheading{What happens here?}
+If the microcontroller is removed while the game is running,
+\code{Controller.ser} is not \code{None}, but:\\
+as soon as you access the object (e.g., \code{Controller.ser.in_waiting}), it
+crashes.
+\end{region}
+
+\begin{region}[pitch=13.47]{360.0}
+\subheading{The solution:}
+We put the while loop in which the object is used into a \code{try} block --
+and in the corresponding \code{except} block we catch the error by setting
+\code{Controller.ser} back to \code{None}.\\
+So the structure is adapted like this:
+\end{region}
+
+\begin{region}{440.5}
+\begin{codeblock}[escapechar=`]
+`\Kw{def}` `\Cy{readline}\Bl{():}`
+\end{codeblock}
+\end{region}
+
+\begin{region}[pitch=12]{453.7}
+\begin{codeblock}[escapechar=`]
+    `\Kw{if}` Controller.ser `\Kw{is}` `\Cy{None}`:
+        `\Kw{return}` `\Cy{None}`
+
+    `\Kw{try}`:
+        `\Kw{while}` Controller.ser.in_waiting > `\Nu{0}`:
+            `\Cm{\# code as before}`
+
+    `\Kw{except}`:
+        `\Cy{print}`(`\Nu{"disconnected"}`)
+        Controller.ser = `\Cy{None}`
+    `\Kw{return}` `\Cy{None}`
+\end{codeblock}
+\end{region}
+
+\begin{region}{612.7}
+\subheading{Task}
+\end{region}
+
+\begin{region}[pitch=13.2]{639.2}
+Make this adaptation and test whether you can now remove the microcontroller
+while the game is running without the program crashing.
+\end{region}
+
+\begin{region}[pitch=13.55]{679.6}
+\textbf{Note}: By the way, if you have not put \code{ser} into a class
+Controller (i.e., your code contains \code{ser.in_waiting} instead of
+\code{Controller.ser.in_waiting}),\\
+then the \code{except} block should of course simply contain
+\code{ser = None}.
+\end{region}
+
+\begin{region}[pitch=13.3]{734.1}
+\textbf{Remember}: When you reconnect the microcontroller, you have to run
+usb\_check on the lab computers so that it is recognized again.
+\end{region}
+
+\nextpage
+%% ==================================================================== 12 ==
+\begin{region}{69.4}
+\heading{Step 8: A few bombs to finish}
+\end{region}
+
+\begin{region}[pitch=14]{87.2}
+The poor space invaders cannot defend themselves at all. In this step, we
+allow them to \textbf{drop bombs}. It won't really help them today, though
+-- the bombs won't destroy our paddle (yet).\\
+The main point here is to test \textbf{how easily a new feature can be built
+into the reorganized code}. And to show you \textbf{how to implement
+something like this quick and dirty, step by step}.
+\end{region}
+
+\begin{region}{175.9}
+\subheading{Task}
+\end{region}
+
+\begin{region}{193.9}
+\begin{plaintasks}
+\item At the very top of \code{ship.py}, import:
+\end{plaintasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{211.8}
+\begin{codeblock}
+import random
+from rocket import Rocket
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.3]{242.6}
+We need the module \code{random} for random numbers, and with \code{Rocket}
+we get our class for rockets.\\
+In the \code{move()} method of the Ship class, add these two lines:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{287.1}
+\begin{codeblock}
+if random.randint(1, 100) == 1:
+    Game.rockets.append(Rocket(self.x, self.y, 10))
+\end{codeblock}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{318.6}
+\textbf{What happens here?} In every frame, each spaceship has a 1\% chance
+of dropping a ``bomb''. Okay, strictly speaking, it is not a bomb but a
+rocket -- but those are details that can be changed later. \emoji{1F604}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{369.6}
+Test what happens! You should observe: the spaceships really do drop rockets
+downward (which, for now, still point in the wrong direction). But in this
+``attack'', they currently destroy themselves.
+\end{region}
+
+\begin{region}[pitch=13.57]{410.1}
+\begin{plaintasks}[start=2]
+\item \textbf{Why do the spaceships destroy themselves?} This happens
+  because currently, for every object in Game.rockets, it is checked whether
+  the distance to a spaceship is small enough for a contact. \textbf{The
+  solution}: we create a new list Game.bombs in Game, so that bombs are
+  managed separately from rockets.
+\end{plaintasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{464.3}
+\begin{steps}
+\item Add a new, empty list \code{bombs} to \code{Game}, analogous to the
+  existing lists \code{balls}, \code{rockets}, and \code{ships}.
+\item Change the \code{draw} method of \code{Game} so that
+  \begin{dotlist}
+  \item all objects in \code{Game.balls}, \code{Game.rockets},
+    \code{Game.ships}, and now also in \code{Game.bombs} are moved and
+    drawn.
+  \item objects that are no longer alive are removed from
+    \code{Game.bombs}.
+  \end{dotlist}
+\item Change the bomb dropping in \code{ship.py} so that the rockets are
+  appended to \code{Game.bombs}.
+\end{steps}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{571.7}
+Then test the game! The space invaders should now survive their bomb
+dropping.
+\end{region}
+
+\begin{region}[pitch=13.2]{584.9}
+\begin{plaintasks}[start=3]
+\item Of course, it is still unattractive that rockets are currently simply
+  dropped instead of bombs. No problem -- by now you know how to solve
+  something like this analogously!
+\end{plaintasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{615.9}
+Use \code{cp rocket.py bomb.py} to create a copy of \code{rocket.py}.\\
+In \code{bomb.py}, you then make the following changes:
+\begin{steps}
+\item Name the class \code{Bomb}.
+\item Use \code{data/bomb.png} as the image.
+\item In the \code{move} method, make sure that \code{self.alive} is set to
+  \code{False}\\ if \code{self.y > Game.height}.
+\end{steps}
+And in \code{ship.py}, you now import the class \code{Bomb} instead of
+\code{Rocket}, and you also append a \code{Bomb} object instead of a
+\code{Rocket} object.\\
+Test whether bombs really fly now! If all is well, your code may go into
+the repository:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.35]{741.5}
+\code{git add bomb.py}\\
+\code{git commit -a -m "bomb blast"}\\
+\code{git push}
+\end{region}
+
+\end{document}
