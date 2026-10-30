@@ -1,0 +1,24 @@
+% Modified record with the changes that affect the checksum marked in red
+\begin{tikzpicture}[
+    field/.style={inner xsep=2pt, inner ysep=0pt, minimum height=1.25em,
+      font=\ttfamily, text depth=0.25em, text height=0.75em},
+    chg/.style={draw=red!85!black, line width=1.1pt},
+    note/.style={red!75!black, font=\sffamily\footnotesize, anchor=south}]
+\node[field, fill=gray!20] (colon) {:};
+\node[field, fill=blue!20, right=-0.5pt of colon] (len) {0C};
+\node[field, fill=cyan!20, right=-0.5pt of len] (addr) {0000};
+\node[field, fill=violet!20, right=-0.5pt of addr] (type) {00};
+\node[field, fill=green!10, right=-0.5pt of type] (data)
+  {529A5A9A000000005A98FBCF};
+\node[field, fill=red!20, right=-0.5pt of data] (sum) {??};
+% character n (0-based) of a field is centered at west + 2pt + (n+0.5)*0.6em
+\path ($(len.west)+(2pt,0)+(1.5*0.6em,0)$) coordinate (c1)
+      ($(data.west)+(2pt,0)+(12*0.6em,0)$) coordinate (c2)
+      ($(data.west)+(2pt,0)+(21.5*0.6em,0)$) coordinate (c3);
+\draw[chg] (c1) ellipse [x radius=0.55em, y radius=0.95em];
+\draw[chg] (c2) ellipse [x radius=2.75em, y radius=0.85em];
+\draw[chg] (c3) ellipse [x radius=0.55em, y radius=0.95em];
+\node[note] at ($(c1)+(0,1.15em)$) {increased by 4};
+\node[note] at ($(c2)+(0,1.15em)$) {new};
+\node[note] at ($(c3)+(0,1.15em)$) {decreased by 2};
+\end{tikzpicture}
