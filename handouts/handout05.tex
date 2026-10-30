@@ -356,7 +356,7 @@ buffer = ""
 for ch in [b'A', b'\n', b'X', b' ', b'1', b'\n']:
     ch = bytes.decode(ch)
     if ch == '\n':
-        print(f"Zeile> |\textquoteleft|{buffer}|\textquoteright|")
+        print(f"Line> |\textquoteleft|{buffer}|\textquoteright|")
         buffer = ""
     else:
         buffer += ch
@@ -364,15 +364,15 @@ for ch in [b'A', b'\n', b'X', b' ', b'1', b'\n']:
 \end{region}
 
 \begin{region}[x=74.7,right=0,pitch=13.5]{214.5}
-The statement \code{print(f"Zeile> {buffer}")} produces formatted output:
+The statement \code{print(f"Line> {buffer}")} produces formatted output:
 the placeholder \code{{buffer}} is automatically replaced by the current content
 of the variable \code{buffer}.
 \end{region}
 
 \begin{region}[x=74.7,right=0,pitch=12.1]{245.2}
 \begin{codeblock}[style=curly,basicstyle=\codex{12.1}]
-Zeile> |\textquoteleft|A|\textquoteright|
-Zeile> |\textquoteleft|X 1|\textquoteright|
+Line> |\textquoteleft|A|\textquoteright|
+Line> |\textquoteleft|X 1|\textquoteright|
 \end{codeblock}
 \end{region}
 
@@ -397,7 +397,7 @@ buffer = ""
 for ch in [b'A', b'\r', b'\n', b'X', b' ', b'1', b'\r', b'\n']:
     ch = bytes.decode(ch)
     if ch == '\n':
-        print(f"Zeile> {buffer}")
+        print(f"Line> {buffer}")
         buffer = ""
     elif ch == '\r':
         pass
@@ -801,7 +801,7 @@ line has actually been read.
 @ 17 @        ch = ser.read(^1^)
 @ 18 @        ch = ~bytes~.decode(ch)
 @ 19 @        @if@ ch == ^'^!\n!^'^:
-@ 20 @            ~print~(f^"Zeile> {buffer}"^)
+@ 20 @            ~print~(f^"Line> {buffer}"^)
 @ 21 @            buffer = ^""^
 @ 22 @        @elif@ ch == ^'^!\r!^'^:
 @ 23 @            @pass@
@@ -999,7 +999,7 @@ And once again, it is your turn! \emoji{1F60E}
 \begin{region}[pitch=13.5]{508.0}
 \begin{ptasks}[start=3]
 \item If everything works as before (only now with class):\\
-  \code{git commit -a -m "mit class"}\\
+  \code{git commit -a -m "with class"}\\
   \code{git push}
 \end{ptasks}
 \end{region}

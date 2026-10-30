@@ -138,7 +138,7 @@ control.
 \begin{alphatasks}[start=2]
 \item \textbf{Change a file as a test}\\
   Open the file \code{README.md} and write in a new line:
-  \code{Jetzt geht’s los!}
+  \code{Here we go!}
 \end{alphatasks}
 \end{region}
 
@@ -211,7 +211,7 @@ control.
   \aN{1} \aI{void} \aR{setup}()
   \aN{2} \{
   \aN{3}     \aR{Serial}.\aR{begin}(\aK{9600});
-  \aN{4}     \aR{Serial}.\aR{println}(\aK{"Hallo! Gleich kommen viele A's"});
+  \aN{4}     \aR{Serial}.\aR{println}(\aK{"Hello! Lots of A's coming up"});
   \aN{5} \}
   \aN{6}
   \aN{7} \aI{void} \aR{loop}()
@@ -244,7 +244,7 @@ control.
 \begin{region}[pitch=12.33]{348.3}
 \begin{numlist}[start=3]
 \item \textbf{Start the serial monitor:} \code{make monitor}\\
-  First, a line should appear with: \code{Hallo! Gleich kommen viele A’s}
+  First, a line should appear with: \code{Hello! Lots of A’s coming up}
   and then -- as promised -- lots of \code{A}s. :-)\\
   You can exit the serial monitor with \code{Control-X}.
 \end{numlist}
@@ -348,10 +348,10 @@ oscilloscope.
 \end{region}
 
 \begin{region}[pitch=12.07]{343.3}
-Change line~4 so that only \tcode{Hallo!} followed by a line break is
+Change line~4 so that only \tcode{Hello!} followed by a line break is
 output. Commit the changes and upload them to the repository with the
 following command:\\
-\code{git commit -a -m "Schritt 2"}\\
+\code{git commit -a -m "Step 2"}\\
 \code{git push}
 \end{region}
 
@@ -430,7 +430,7 @@ compare the output in the serial monitor with the expected output.
 \end{region}
 
 \begin{region}{744.5}
-\textbf{Finally:} \code{git commit -a -m "Schritt 3"} and \code{git push}
+\textbf{Finally:} \code{git commit -a -m "Step 3"} and \code{git push}
 \end{region}
 
 \nextpage
@@ -519,7 +519,7 @@ it does:
 \end{region}
 
 \begin{region}{706.3}
-\textbf{Finally:} \code{git commit -a -m "Schritt 4"} and \code{git push}
+\textbf{Finally:} \code{git commit -a -m "Step 4"} and \code{git push}
 \end{region}
 
 \nextpage
@@ -683,7 +683,7 @@ button is now pressed.
 
 \begin{region}{767.8}
 \begin{numlist}[start=4]
-\item \textbf{If everything works:} \code{git commit -a -m "Schritt 5"} and
+\item \textbf{If everything works:} \code{git commit -a -m "Step 5"} and
   \code{git push}
 \end{numlist}
 \end{region}
@@ -711,7 +711,7 @@ content:
 
 \begin{region}{203.0}
 \begin{asmlisting}[9]
-\aR{print}(\aK{"Hallo Welt"})
+\aR{print}(\aK{"Hello World"})
 \end{asmlisting}
 \end{region}
 
@@ -724,7 +724,7 @@ This is still a classic hello world program. Run it with:
 \end{region}
 
 \begin{region}{274.9}
-The output should -- not very surprisingly -- simply be: \code{Hallo Welt}
+The output should -- not very surprisingly -- simply be: \code{Hello World}
 (with a line break).
 \end{region}
 
@@ -749,7 +749,7 @@ Modify the program \code{serial-reader.py} as follows:
   \aN{3}
   \aN{4} ser = serial.Serial(\aK{"/dev/ttyUSB0"}, \aK{9600})
   \aN{5}
-  \aN{6} \aR{print}(\aK{"Warte auf serielle Eingaben..."})
+  \aN{6} \aR{print}(\aK{"Waiting for serial input..."})
   \aN{7}
   \aN{8 while} \aR{True}:
   \aN{9}     \aN{while} ser.in\_waiting > \aK{0}:
@@ -825,7 +825,7 @@ potentiometer or press the push button):
 
 \begin{region}[pitch=13]{250.4}
 Exit the program with \code{Control-C}.\\
-Update your repository with \code{git commit -a -m "Schritt 6"} and
+Update your repository with \code{git commit -a -m "Step 6"} and
 \code{git push}
 \end{region}
 
@@ -1036,7 +1036,7 @@ yourselves is more fun!
 
 \begin{region}{675.6}
 \code{git rm breakout.py}\\
-\code{git commit -a -m "Fertig!"}\\
+\code{git commit -a -m "Done!"}\\
 \code{git push}
 \end{region}
 
