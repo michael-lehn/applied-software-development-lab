@@ -56,7 +56,7 @@
 \setsansfont{TeX Gyre Heros}
 \setmonofont{Fira Mono}
 \newfontfamily\emojifont{Noto Color Emoji}[Renderer=HarfBuzz]
-\newcommand*\emoji[1]{{\emojifont\symbol{"#1}}}
+\newcommand*\emoji[1]{{\mdseries\emojifont\symbol{"#1}}}
 \renewcommand\familydefault{\sfdefault}
 \renewcommand\normalsize{\fontsize{11bp}{12bp}\selectfont}
 \renewcommand\small{\fontsize{10bp}{11bp}\selectfont}
