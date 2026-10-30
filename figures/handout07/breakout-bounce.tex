@@ -1,5 +1,7 @@
 % Breakout-style direction after hitting the paddle (Lab Handout 7, Step 6).
-% Coordinates in pixels of the original 2000 x 854 sketch.
+% Coordinates in pixels of the original 2000 x 854 sketch. The arrows show
+% the angles given by the formula in the text (60 and 75 degrees above the
+% horizontal for t = +-1 and t = +-0.5).
 \begin{tikzpicture}[x=0.2149bp,y=-0.2149bp,
     font=\fontsize{7.2bp}{8.6bp}\selectfont,
     lbl/.style={anchor=base,inner sep=0,align=center},
@@ -17,11 +19,11 @@
   \useasboundingbox (0,0) rectangle (2000,854);
   \fill[figpaddle] (572,517) rectangle (1342,641);
   \draw[line width=0.5bp] (572,517) -- (1342,517);
-  \draw[dir,figmag] (572,517) -- (290,350);
-  \draw[dir,figgreen] (765,517) -- (600,228);
+  \draw[dir,figmag] (572,517) -- (407,231);
+  \draw[dir,figgreen] (765,517) -- (680,198);
   \draw[dir,figgray] (957,517) -- (957,183);
-  \draw[dir,figgreen] (1150,517) -- (1316,228);
-  \draw[dir,figmag] (1342,517) -- (1632,350);
+  \draw[dir,figgreen] (1150,517) -- (1235,198);
+  \draw[dir,figmag] (1342,517) -- (1507,231);
   \foreach \p in {(572,517),(1342,517)} \fill[figblue] \p +(-6,-6) rectangle +(6,6);
   \fill[figcenter] (957,517) +(-6,-6) rectangle +(6,6);
   % parameter values
@@ -33,14 +35,14 @@
   % directions
   \node[lbl,text=figgray] at (957,110) {Direction after reflection};
   \node[lbl,text=figgray] at (957,150) {``straight up''};
-  \node[lbl,text=figgreen] at (546,155) {Direction after reflection};
-  \node[lbl,text=figgreen] at (546,195) {``30 degrees to the left''};
-  \node[lbl,text=figgreen] at (1367,155) {Direction after reflection};
-  \node[lbl,text=figgreen] at (1367,195) {``30 degrees to the right''};
-  \node[lbl,text=figmag] at (233,283) {Direction after reflection};
-  \node[lbl,text=figmag] at (233,325) {``60 degrees to the left''};
-  \node[lbl,text=figmag] at (1710,283) {Direction after reflection};
-  \node[lbl,text=figmag] at (1710,325) {``60 degrees to the right''};
+  \node[lbl,text=figgreen] at (520,125) {Direction after reflection};
+  \node[lbl,text=figgreen] at (520,165) {``75 degrees up to the left''};
+  \node[lbl,text=figgreen] at (1394,125) {Direction after reflection};
+  \node[lbl,text=figgreen] at (1394,165) {``75 degrees up to the right''};
+  \node[lbl,text=figmag] at (190,283) {Direction after reflection};
+  \node[lbl,text=figmag] at (190,325) {``60 degrees up to the left''};
+  \node[lbl,text=figmag] at (1735,283) {Direction after reflection};
+  \node[lbl,text=figmag] at (1735,325) {``60 degrees up to the right''};
   % paddle edges
   \node[lbl,text=figblue] at (290,630) {``Left paddle edge''};
   \node[lbl,text=figblue] at (290,676) {(Paddle.x, Paddle.y)};
