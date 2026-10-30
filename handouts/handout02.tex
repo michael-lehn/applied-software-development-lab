@@ -1,0 +1,824 @@
+% Applied Software Development Lab -- Lab Handout 2: Blinking LED
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 2".
+\documentclass{aslab}
+\sethandout{2}{Blinking LED}
+\graphicspath{{../figures/handout02/}{../figures/shared/}}
+\usepackage{pifont}
+\usepackage{luacolor}
+\usepackage{lua-ul}
+
+\makeatletter
+%% Lists used in this handout --------------------------------------------
+%% "A)" lists with the text at +18bp
+\newlist{alphatasks}{enumerate}{1}
+\setlist[alphatasks]{label={\Alph*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+%% plain "1." lists (regular weight)
+\newlist{numlist}{enumerate}{1}
+\setlist[numlist]{label={\arabic*.},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+%% small bullet lists with the text at +9bp
+\newlist{dotlist}{itemize}{1}
+\setlist[dotlist]{label={\textbullet},leftmargin=9bp,labelsep=*,align=left,
+  labelindent=0pt}
+%% arrow lists with the text at +18bp
+\newcommand*\aslabarrow{\ding{220}}
+\newcommand*\aslabbigarrow{{\fontsize{13.2bp}{12bp}\selectfont\ding{220}}}
+\newlist{arrowlist}{itemize}{1}
+\setlist[arrowlist]{label={\aslabbigarrow},leftmargin=18bp,labelsep=*,
+  align=left,labelindent=0pt}
+
+%% Assembly listings with syntax colors ----------------------------------
+%% Inside asmlisting, every space is a fixed 0.6em and every line break
+%% ends a line, so the columns of the original listings are preserved.
+\newcommand*\aN[1]{\textcolor{codeorange}{#1}}% line numbers, labels
+\newcommand*\aI[1]{\textcolor{codegreen}{#1}}% instructions
+\newcommand*\aK[1]{\textcolor{codered}{#1}}% constants, I/O addresses
+\newcommand*\aR[1]{\textcolor{codecyan}{#1}}% registers, jump targets
+\newcommand*\aC[1]{\textcolor{codepurple}{#1}}% comments
+\newcommand*\asm@space{\leavevmode\hbox to 0.6em{}}
+{\catcode`\ =\active\catcode`\^^M=\active%
+\gdef\asm@setup{\catcode`\ =\active\def {\asm@space}%
+\catcode`\^^M=\active\def^^M{\par}}}%
+\newenvironment{asmlisting}{\par\ttfamily\asm@setup}{\par}
+
+%% Absolute drawing in page coordinates (bp, y downwards) ------------------
+\newcommand\pagedraw[1]{\placeat{0}{0}{\begin{tikzpicture}[x=1bp,y=-1bp]
+  \useasboundingbox (0,0) rectangle (1,1);#1\end{tikzpicture}}}
+\definecolor{tablegray}{HTML}{F5F5F5}
+\definecolor{tableline}{HTML}{A5A5A5}
+\definecolor{hlgray}{HTML}{E8E8E8}
+\tikzset{tline/.style={draw=tableline,line width=0.5bp}}
+
+%% Highlighted text (gray background as in the original), also across
+%% line breaks: 10.3bp above and 4bp below the baseline
+\newcommand\hltext[1]{\underLine[top=10.3bp,bottom=-4bp,color=hlgray]{#1}}
+%% Table cells: 10bp text on a 12bp pitch, ragged right
+\newcommand*\cell{\small\baselineskip=12bp\raggedright}
+%% Keep the baseline pitch fixed even next to tall inline code boxes
+\lineskiplimit=-\maxdimen
+\makeatother
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{124.0}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}{149.0}
+In the last lab handout, you created machine code by hand. Today we show
+how the same machine code can be generated automatically from an assembly
+program -- and then flashed to the microcontroller. You will also practice
+working with the terminal.
+\end{region}
+
+\begin{region}{199.0}
+\heading{Step 1: Working with the terminal}
+\end{region}
+
+\begin{region}[pitch=14.3]{227.5}
+\textbf{Goal:} You will learn to find your way around the terminal, to
+clone a repository with Git, and to navigate the file system.
+\end{region}
+
+\begin{region}[pitch=13.2]{269.4}
+We start with two terminals side by side -- one for editing, one for
+running commands.
+\end{region}
+
+\placegraphic{56.7}{286.4}{458.6}{terminals-git-clone.png}
+
+\begin{region}{495.2}
+\subheading{Left terminal (editing):}
+\end{region}
+
+\begin{region}[pitch=12.2]{509.4}
+\begin{alphatasks}
+\item \textbf{Show the directory contents}\\
+  With the command \code{ls}, you can list the files and subdirectories in
+  the current directory. Since it should be empty, nothing is displayed.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.2]{546.7}
+\begin{alphatasks}[start=2]
+\item \textbf{Clone the Git repository}\\
+  \code{git clone https://gitlab.uni-ulm.de/mlehn/avr-bare-metal.git}
+  downloads\\ the code base that we use for this lab handout.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.0]{584.1}
+\begin{alphatasks}[start=3]
+\item \textbf{Show the directory contents again}\\
+  Enter \code{ls} again. The directory \code{avr-bare-metal} should now be
+  displayed -- on the lab computers in blue, because it is a directory.
+  Regular files appear in black.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.3]{633.4}
+\begin{alphatasks}[start=4]
+\item \textbf{Show the current directory}\\
+  With \code{pwd} (= print working directory), you can see which directory
+  you are currently in. This should be \code{/home/asp} -- your home
+  directory. The directory asp is a subdirectory of \code{home}, which in
+  turn is located directly in the root directory \code{/}.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.3]{683.3}
+\begin{alphatasks}[start=5]
+\item \textbf{Change into the subdirectory}\\
+  With \code{cd avr-bare-metal}, you change into the new directory. Use
+  \code{pwd} to check that you are now in \code{/home/asp/avr-bare-metal},
+  and list its contents with \code{ls}. You should see a subdirectory
+  \code{asm}.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.3]{733.2}
+\begin{alphatasks}[start=6]
+\item \textbf{One directory deeper and opening a file}\\
+  Now change into the subdirectory with \code{cd asm} and check again with
+  \code{pwd} and \code{ls} that you are now in
+  \code{/home/asp/avr-bare-metal/asm}. You should see the file
+  \code{led_pin2.s} -- the assembly program. Open it in the editor with
+  \code{nano led_pin2.s}.
+\end{alphatasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}{69.4}
+\subheading{Right terminal (compiling \& flashing)}
+\end{region}
+
+\begin{region}[pitch=12.3]{82.4}
+\begin{alphatasks}
+\item \textbf{Change into the same directory}\\
+  The challenge: in the right terminal, you have to change manually into
+  the same directory as in the left terminal. You can do this in one step
+  with \code{cd avr-bare-metal/asm}, going down two directories at once.
+  Alternatively, you can first run \code{cd avr-bare-metal} and then
+  \code{cd asm}.
+\end{alphatasks}
+\end{region}
+
+\begin{region}[pitch=12.1]{144.4}
+\begin{alphatasks}[start=2]
+\item \textbf{Display the content of the file}\\
+  With \code{cat led_pin2.s}, you can display the content of the file --
+  this is assembly code, a human-readable form of machine code. With the
+  right tools, it can be turned into a so-called hex file that can be
+  transferred to the microcontroller.
+\end{alphatasks}
+\end{region}
+
+\placegraphic{74.7}{195.4}{445.9}{terminals-nano-cat.png}
+
+\begin{region}[pitch=12.15]{399.4}
+\begin{alphatasks}[start=3]
+\item \textbf{Understand the Makefile and compile}\\
+  The so-called Makefile is also located in the current directory. It
+  contains instructions on how the HEX file is generated automatically from
+  the assembly program. Display it with \code{cat Makefile}. Then start the
+  build process with \code{make}.
+\end{alphatasks}
+\end{region}
+
+\placegraphic{74.7}{438.4}{384.5}{make-output.png}
+
+\begin{region}[x=74.7,right=0,pitch=12.2]{511.5}
+If everything works, a file \code{led_pin2.hex} is generated. It contains
+the machine code that you created by hand in the last lab handout. Look at
+its content with \code{cat led_pin2.hex}; it should look exactly like this:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.3]{560.2}
+\code{:0C000000529A5A9A000000005A98FBCF58}\\
+\code{:00000001FF}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{596.5}
+This is exactly the machine code from Lab Handout~1 that switches pin~2
+between HIGH and LOW every 250\,ns.
+\end{region}
+
+\begin{region}[pitch=12.15]{621.5}
+\begin{alphatasks}[start=4]
+\item \textbf{Flash the microcontroller}
+  \begin{numlist}
+  \item Connect the microcontroller via USB.
+  \item Run \code{usb_check}. This command makes sure that the WSL guest
+    system can see the USB port.
+  \item Start the upload with \code{make upload HEX=led_pin2.hex}
+  \end{numlist}
+\end{alphatasks}
+\end{region}
+
+\begin{region}{683.1}
+\begin{alphatasks}[start=5]
+\item \textbf{Measure with the oscilloscope}\\
+  Use an oscilloscope and measure the signal at pin~2 of the
+  microcontroller. You should see a square wave with 250\,ns HIGH and
+  250\,ns LOW.
+\end{alphatasks}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\heading{Command overview for navigating the file system}
+\end{region}
+
+\pagedraw{
+  \fill[tablegray] (56.9,93.7) rectangle (538.4,114.1);
+  \fill[tablegray] (56.9,146.2) rectangle (538.4,166.6);
+  \fill[tablegray] (56.9,187.0) rectangle (538.4,207.4);
+  \fill[tablegray] (56.9,227.8) rectangle (538.4,271.8);
+  \foreach \y in {73.3,93.7,114.1,146.2,166.6,187.0,207.4,227.8,271.8}
+    \draw[tline] (56.4,\y) -- (538.9,\y);
+  \foreach \x in {56.9,133.6,252.0,538.4}
+    \draw[tline] (\x,72.8) -- (\x,272.3);
+}
+
+\begin{region}[x=61.0,width=68,free]{87.0}
+\cell\bfseries Command
+\end{region}
+\begin{region}[x=256.1,width=278,free]{87.0}
+\cell\bfseries Explanation
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{107.5}\cell pwd\end{region}
+\begin{region}[x=137.8,width=110,free]{107.5}\cell print working directory\end{region}
+\begin{region}[x=256.1,width=278,free]{107.5}\cell
+Shows where you are in the file system
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{127.9}\cell ls\end{region}
+\begin{region}[x=137.8,width=110,free]{127.9}\cell list directory content\end{region}
+\begin{region}[x=256.1,width=278,free]{127.9}\cell
+List of all files and subdirectories in the current directory
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{160.0}\cell cd\end{region}
+\begin{region}[x=137.8,width=110,free]{160.0}\cell change directory\end{region}
+\begin{region}[x=256.1,width=278,free]{160.0}\cell
+Always changes into your own home directory
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{180.3}\cell cd ..\end{region}
+\begin{region}[x=256.1,width=278,free]{180.3}\cell
+Changes one directory up.
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{200.7}\cell cd foo\end{region}
+\begin{region}[x=256.1,width=278,free]{200.7}\cell
+Changes into the subdirectory foo (if it exists)
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{221.1}\cell cd foo/bar\end{region}
+\begin{region}[x=256.1,width=278,free]{221.1}\cell
+Changes into the sub-subdirectory foo/bar (if it exists)
+\end{region}
+
+\begin{region}[x=61.0,width=68,free]{241.5}\cell cat foo.txt\end{region}
+\begin{region}[x=137.8,width=110,free]{241.5}\cell
+concatenate files and print on the standard output
+\end{region}
+\begin{region}[x=256.1,width=278,free]{241.5}\cell
+If the file foo.txt exists in the current directory, its content is
+printed. Handy for quickly checking what is in a file.
+\end{region}
+
+\placefigure[187.7]{412.6}{301.9}{133.8}{flowchart-sbi-loop.tex}
+
+\begin{region}{296.3}
+\heading{Step 2: A second look at the assembly program}
+\end{region}
+
+\begin{region}[width=344,pitch=13.17]{323.9}
+In this task, you will work out how the assembly program is structured --
+and why it does the same thing as the machine code program that you wrote
+by hand in the last lab session.
+\end{region}
+
+\begin{region}{389.8}
+\begin{asmlisting}
+\aN{1}         \aI{sbi}     \aK{0x0a}, \aK{2}     \aC{; 2 cycles}
+\aN{2}
+\aN{3 loop}:   \aI{sbi}     \aK{0x0b}, \aK{2}     \aC{; 2 cycles}
+\aN{4}         \aI{nop}                 \aC{; 1 cycle}
+\aN{5}         \aI{nop}                 \aC{; 1 cycle}
+\aN{6}         \aI{cbi}     \aK{0x0b}, \aK{2}     \aC{; 2 cycles}
+\aN{7}         \aI{rjmp}    \aR{loop}        \aC{; 2 cycles}
+\end{asmlisting}
+\end{region}
+
+\begin{region}[width=344,pitch=12.1]{478.4}
+Each line contains one machine instruction in symbolic form -- this is
+assembly language. The instruction is on the far left, followed by its
+arguments, if any. Everything after \code{;} is a comment; here it states
+how many clock cycles the instruction takes.
+\end{region}
+
+\figcaption{444.3}{511.2}{Flowchart}
+
+\begin{region}{539.6}
+\subheading{The instructions in detail}
+\end{region}
+
+\pagedraw{
+  \fill[tablegray] (56.9,564.3) rectangle (538.4,596.4);
+  \fill[tablegray] (56.9,617.2) rectangle (538.4,637.9);
+  \foreach \y in {543.5,564.3,596.4,617.2,637.9,668.2}
+    \draw[tline] (56.4,\y) -- (538.9,\y);
+  \foreach \x in {56.9,118.2,265.3,538.4}
+    \draw[tline] (\x,543.0) -- (\x,668.7);
+}
+
+\begin{region}[x=61.0,width=54,free]{557.2}\cell\bfseries Instruction\end{region}
+\begin{region}[x=122.3,width=139,free]{557.2}\cell\bfseries Meaning\end{region}
+\begin{region}[x=269.5,width=265,free]{557.2}\cell\bfseries Effect in the program\end{region}
+
+\begin{region}[x=61.0,width=54,free]{577.2}\cell\ttfamily sbi\end{region}
+\begin{region}[x=122.3,width=139,free]{578.0}\cell Set Bit in I/O Register\end{region}
+\begin{region}[x=269.5,width=265,free,pitch=12.1]{578.0}\cell
+\makebox[78bp][l]{\ttfamily sbi 0x0a, 2}Set pin~2 as output\\
+\makebox[78bp][l]{\ttfamily sbi 0x0b, 2}Set pin~2 HIGH
+\end{region}
+
+\begin{region}[x=61.0,width=54,free]{609.4}\cell\ttfamily cbi\end{region}
+\begin{region}[x=122.3,width=139,free]{610.2}\cell Clear Bit in I/O Register\end{region}
+\begin{region}[x=269.5,width=265,free]{610.2}\cell
+\makebox[78bp][l]{\ttfamily cbi 0x0b, 2}Set pin~2 LOW
+\end{region}
+
+\begin{region}[x=61.0,width=54,free]{630.2}\cell\ttfamily nop\end{region}
+\begin{region}[x=122.3,width=139,free]{630.9}\cell No Operation\end{region}
+\begin{region}[x=269.5,width=265,free]{630.9}\cell
+No effect, used to stretch the timing
+\end{region}
+
+\begin{region}[x=61.0,width=54,free,pitch=11]{650.9}\cell\ttfamily
+rjmp\\loop
+\end{region}
+\begin{region}[x=122.3,width=139,free]{651.7}\cell Relative jump to a label\end{region}
+\begin{region}[x=269.5,width=265,free]{651.7}\cell
+Jumps back to the label {\ttfamily loop:}
+\end{region}
+
+\begin{region}{691.0}
+Labels such as \code{loop:} serve as jump targets. The instruction
+\code{rjmp loop} makes the program continue at line~3 -- this creates an
+endless loop. The flowchart shows the sequence over time graphically. It can
+help you understand how this program produces a square wave.
+\end{region}
+
+\begin{region}{752.0}
+\subheading{Task}
+Modify the assembly program so that a square wave with 500\,ns HIGH and
+500\,ns LOW is generated at pin~2. As a reminder: one clock cycle takes
+62.5\,ns.
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{69.4}
+\heading{Step 3: Blinking more elegantly with exclusive OR}
+\end{region}
+
+\begin{region}[pitch=13.27]{97.0}
+The following program -- as before -- makes sure that a symmetric square
+wave is generated at pin~2: 250\,ns HIGH and 250\,ns LOW, alternating.\\
+The difference lies in the code: this time we use registers and a new
+instruction -- the exclusive OR (\code{eor}) in line~5.
+\end{region}
+
+\begin{region}{163.5}
+\begin{asmlisting}
+  \aN{1}         \aI{ldi}     \aR{r19},    \aK{4}           \aC{; 1 cycle}
+  \aN{2}         \aI{out}     \aK{0x0a},   \aR{r19}         \aC{; 1 cycle}
+  \aN{3}         \aI{ldi}     \aR{r18},    \aK{0}           \aC{; 1 cycle}
+  \aN{4 loop}:
+  \aN{5}         \aI{eor}     \aR{r18},    \aR{r19}         \aC{; 1 cycle}
+  \aN{6}         \aI{out}     \aK{0x0b},   \aR{r18}         \aC{; 1 cycle}
+  \aN{7}         \aI{rjmp}    \aR{loop}                \aC{; 2 cycles}
+\end{asmlisting}
+\end{region}
+
+\begin{region}[pitch=14.3]{261.3}
+\textbf{Before we analyze what exactly the code does, we first test whether
+it really does what it promises.}
+\end{region}
+
+\begin{region}{304.1}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=14.3]{318.4}
+\begin{alphatasks}
+\item In the editor \code{nano} (left terminal), save your current file with
+  \textbf{Ctrl\,+\,O} (or \textbf{Ctrl\,+\,S}) and exit the editor with
+  \textbf{Ctrl\,+\,X}.
+\end{alphatasks}
+\end{region}
+
+\begin{region}{346.3}
+\begin{alphatasks}[start=2]
+\item Create a new file with \code{nano led_pin2_xor.s}
+\end{alphatasks}
+\end{region}
+
+\begin{region}{359.5}
+\begin{alphatasks}[start=3]
+\item Type in the program shown above and save it.
+\end{alphatasks}
+\end{region}
+
+\begin{region}{372.9}
+\begin{alphatasks}[start=4]
+\item Assemble and flash the new program with
+  \code{make upload HEX=led_pin2_xor.hex}
+\end{alphatasks}
+\end{region}
+
+\begin{region}{386.2}
+\begin{alphatasks}[start=5]
+\item Check with the oscilloscope whether pin~2 switches between HIGH and
+  LOW as claimed.
+\end{alphatasks}
+\end{region}
+
+\begin{region}{413.5}
+\subheading{Explanation of the program (and one more task)}
+\end{region}
+
+\begin{region}[pitch=13.17]{427.1}
+This program uses registers and an XOR operation (\code{eor}) to toggle the
+state of pin~2. Registers are small storage cells in the processor. The
+ATmega328P has 32 registers (r0 to r31), each 8 bits wide.
+Unlike normal RAM, they can be used directly in arithmetic operations.
+Besides addition and subtraction, an exclusive OR is also possible. The
+following describes what the individual lines do.
+\end{region}
+
+\begin{region}[pitch=12.3]{507.1}
+\textbf{Line 1:} \code{ldi r19, 4}\\
+Writes the number 4 into register \code{r19}. Afterwards,
+\code{r19 = b00000100}, i.e., only bit~2 is set.
+\end{region}
+
+\begin{region}[pitch=12.2]{535.4}
+\textbf{Line 2:} \code{out 0x0a, r19}\\
+Configures pins 0 to 7 of the microcontroller as inputs or outputs. Since
+only bit~2 is set in \code{r19}, only pin~2 is enabled as an output.
+\end{region}
+
+\begin{region}[pitch=12.4]{575.7}
+\textbf{Line 3:} \code{ldi r18, 0}\\
+Initializes \code{r18} with 0, i.e., all bits are cleared.
+\end{region}
+
+\begin{region}[pitch=12.2]{604.1}
+\textbf{Line 5:} \code{eor r18, r19}\\
+Combines \code{r18} with \code{r19} using an exclusive OR. This switches
+bit~2 in \code{r18} -- this is also called ``toggling'': if it was 0
+before, it becomes 1; if it was 1 before, it becomes 0.\\
+The content of \code{r18} therefore alternates between \code{b00000000} and
+\code{b00000100}.
+\end{region}
+
+\begin{region}[pitch=12.2]{656.7}
+\textbf{Line 6:} \code{out 0x0b, r18}\\
+Outputs the content of \code{r18} to pins 0 to 7 of the microcontroller.\\
+If a bit in \code{r18} is set and the corresponding pin is configured as an
+output, this pin is set HIGH. If the bit is not set, the pin (provided it is
+configured as an output) is set LOW.
+\end{region}
+
+\begin{region}{730.3}
+\textbf{Task:} Explain to us why the exclusive OR in line~5 ``toggles''
+bit~2.
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\heading{Step 4: Simple delay with one register}
+\end{region}
+
+\begin{region}[pitch=13.53]{95.9}
+Compared with the previous program, only lines 7 to 10 are new in this
+example. So you do \textbf{not have to type in the entire program again}.
+As you will measure in a moment, these additional lines make pin~2 switch
+between HIGH and LOW more slowly.
+\end{region}
+
+\begin{region}{153.0}
+\begin{asmlisting}
+  \aN{1}         \aI{ldi}     \aR{r19},    \aK{4}      \aC{; 1 cycle}
+  \aN{2}         \aI{out}     \aK{0x0a},   \aR{r19}    \aC{; 1 cycle}
+  \aN{3}         \aI{ldi}     \aR{r18},    \aK{0}      \aC{; 1 cycle}
+  \aN{4 loop}:
+  \aN{5}         \aI{eor}     \aR{r18},    \aR{r19}    \aC{; 1 cycle}
+  \aN{6}         \aI{out}     \aK{0x0b},   \aR{r18}    \aC{; 1 cycle}
+  \aN{7}         \aI{ldi}     \aR{r24},    \aK{0x02}   \aC{; 1 cycle (set counter for countdown)}
+  \aN{8 delay}:
+  \aN{9}         \aI{subi}    \aR{r24},    \aK{1}      \aC{; 1 cycle}
+ \aN{10}         \aI{brne}    \aR{delay}          \aC{; 2 cycles if taken, 1 otherwise}
+ \aN{11}
+ \aN{12}         \aI{rjmp}    \aR{loop}           \aC{; 2 cycles}
+\end{asmlisting}
+\end{region}
+
+\begin{region}{304.7}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.5]{318.2}
+\begin{numlist}
+\item Exit the editor. Then run the command
+  \code{cp led_pin2_xor.s led_pin2_delay.s}. This gives you a copy of the
+  file \code{led_pin2_xor.s} named \code{led_pin2_delay.s}.
+\end{numlist}
+\end{region}
+
+\begin{region}{345.3}
+\begin{numlist}[start=2]
+\item Add lines 7 to 10 from the listing above to \code{led_pin2_delay.s}.
+\end{numlist}
+\end{region}
+
+\begin{region}[pitch=13.3]{358.5}
+\begin{numlist}[start=3]
+\item The figure on the next page shows a flowchart for the program. You can
+  see that there are now two nested loops. The inner loop is new:
+  \begin{steps}
+  \item In line~7, register \code{r24} is initialized with the value
+    \code{0x02} (i.e., \code{2}).
+  \item Lines 8 to 10 form the inner loop, in which \code{r24} is counted
+    down until it has reached the value \code{0}. Only then is the loop
+    exited.
+  \end{steps}
+  The project companion derives the following:
+\end{numlist}
+\end{region}
+
+\begin{region}[x=74.6,right=0]{452.7}
+\hltext{If {\ttfamily r24} is initialized with \textbf{n}, one pass of the outer
+loop takes exactly \textbf{3·n + 4} clock cycles.}
+\end{region}
+
+\begin{region}[x=74.6,right=0,pitch=13.3]{480.1}
+\hltext{This means: pin~2 stays HIGH for \textbf{3·n + 4} clock cycles and then
+LOW for just as many cycles before the state switches again.}
+\end{region}
+
+\begin{region}[x=74.6,right=0,pitch=14.1]{519.8}
+You will now verify this claim experimentally. To do so, fill in the table
+below. For different values of \textbf{n}, you
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.25]{548.4}
+\begin{dotlist}
+\item adjust the initialization of \code{r24} in line~7,
+\item flash the program to the microcontroller again,
+\item and then check with the oscilloscope how long pin~2 is HIGH and LOW.
+\end{dotlist}
+\end{region}
+
+\begin{region}{596.0}
+\subheading{Table for the measurements (1 clock cycle takes 62.5\,ns)}
+\end{region}
+
+\pagedraw{
+  \foreach \y in {633.2,674.0,714.8}
+    \fill[tablegray] (56.9,\y) rectangle (538.4,\y+20.4);
+  \foreach \y in {601.1,633.2,653.6,674.0,694.4,714.8,735.2,755.6}
+    \draw[tline] (56.4,\y) -- (538.9,\y);
+  \foreach \x in {56.9,84.4,151.2,311.9,439.3,538.4}
+    \draw[tline] (\x,600.6) -- (\x,756.1);
+}
+
+\begin{region}[x=56.9,width=27.5,free]{614.9}\cell\centering n\end{region}
+\begin{region}[x=88.4,width=58.8,free]{614.7}\raggedleft 3·n + 4\end{region}
+\begin{region}[x=156.3,width=152,free]{614.9}\cell
+Exact duration for 3·n + 4 cycles
+\end{region}
+\begin{region}[x=311.9,width=127.4,free]{614.9}\cell\centering
+Measured\\HIGH duration
+\end{region}
+\begin{region}[x=439.3,width=99.1,free]{614.9}\cell\centering
+Measured\\LOW duration
+\end{region}
+\begin{region}[x=56.9,width=27.5,free]{647.0}\cell\centering 1\end{region}
+\begin{region}[x=56.9,width=27.5,free]{667.4}\cell\centering 2\end{region}
+\begin{region}[x=56.9,width=27.5,free]{687.8}\cell\centering 3\end{region}
+\begin{region}[x=56.9,width=27.5,free]{708.2}\cell\centering 4\end{region}
+\begin{region}[x=56.9,width=27.5,free]{728.6}\cell\centering 255\end{region}
+\begin{region}[x=56.9,width=27.5,free]{749.0}\cell\centering 0\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\placefigure[539.7]{123.4}{151.1}{348.5}{flowchart-delay.tex}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}{69.4}
+\heading{Step 5: 32-bit delay with four registers}
+\end{region}
+
+\begin{region}[pitch=13.2]{96.2}
+A single register of our microprocessor can only store values between
+\code{0x00} (i.e., 0) and \code{0xFF} (i.e., 255). That is not enough to
+delay the outer loop so much that the blinking of an LED connected to
+pin~2 can be perceived with the naked eye.
+\end{region}
+
+\begin{region}[pitch=13.4]{149.2}
+The following program therefore uses a 32-bit counter that is implemented
+with the four registers \code{r24} to \code{r27}. Together, these four
+registers form a so-called register group, which is treated like a single
+large register. The arrangement is:
+\end{region}
+
+\begin{region}[x=59.8,right=0]{202.6}
+\code{r27 : r26 : r25 : r24}
+\end{region}
+
+\begin{region}[pitch=13.4]{229.0}
+This group stores a 32-bit value in the so-called little-endian format --
+that is, the least significant byte is in \code{r24}, the most significant
+one in \code{r27}.
+\end{region}
+
+\begin{region}{268.8}
+Example: if the registers are set as follows
+\end{region}
+
+\begin{region}{295.4}
+\code{r24 = 0x12, r25 = 0x34, r26 = 0x56, r27 = 0x78}
+\end{region}
+
+\begin{region}{321.8}
+then the combined value is:
+\end{region}
+
+\begin{region}{348.4}
+\code{n = r27:r26:r25:r24 = 0x78563412}
+\end{region}
+
+\begin{region}{374.9}
+In the program below, the registers are initialized as follows:
+\end{region}
+
+\begin{region}{401.5}
+\code{r24 = 0x00, r25 = 0x02, r26 = 0x00, r27 = 0x00}
+\end{region}
+
+\begin{region}{427.9}
+This corresponds to:
+\end{region}
+
+\begin{region}{454.5}
+\code{n = 0x00000200 = 512}
+\end{region}
+
+\begin{region}{480.9}
+That is: the inner loop runs 512 times.
+\end{region}
+
+\begin{region}{507.5}
+\begin{asmlisting}
+  \aN{1}         \aI{ldi}     \aR{r19},    \aK{4}         \aC{; for pin 2 (4 = 2\textasciicircum2)}
+  \aN{2}         \aI{out}     \aK{0x0a},   \aR{r19}
+  \aN{3}         \aI{ldi}     \aR{r18},    \aK{0}
+  \aN{4 loop}:
+  \aN{5}         \aI{eor}     \aR{r18},    \aR{r19}       \aC{; 1 cycle}
+  \aN{6}         \aI{out}     \aK{0x0b},   \aR{r18}       \aC{; 1 cycle}
+  \aN{7}
+  \aN{8}         \aI{ldi}     \aR{r24},    \aK{0x00}      \aC{; 1 cycle}
+  \aN{9}         \aI{ldi}     \aR{r25},    \aK{0x02}      \aC{; 1 cycle}
+ \aN{10}         \aI{ldi}     \aR{r26},    \aK{0x00}      \aC{; 1 cycle}
+ \aN{11}         \aI{ldi}     \aR{r27},    \aK{0x00}      \aC{; 1 cycle}
+ \aN{12 delay}:
+ \aN{13}         \aI{subi}    \aR{r24},    \aK{1}         \aC{; 1 cycle}
+ \aN{14}         \aI{sbci}    \aR{r25},    \aK{0}         \aC{; 1 cycle}
+ \aN{15}         \aI{sbci}    \aR{r26},    \aK{0}         \aC{; 1 cycle}
+ \aN{16}         \aI{sbci}    \aR{r27},    \aK{0}         \aC{; 1 cycle}
+ \aN{17}         \aI{brne}    \aR{delay}             \aC{; 2 cycles if taken, 1 otherwise}
+ \aN{18}
+ \aN{19}         \aI{rjmp}    \aR{loop}              \aC{; 2 cycles}
+\end{asmlisting}
+\end{region}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}{69.4}
+\subheading{Tasks}
+\end{region}
+
+\begin{region}[pitch=13.37]{95.9}
+\begin{numlist}
+\item You do not have to type in the entire program again.\\
+  Compared with \code{led_pin2_delay.s}, only lines 9 to 11 (initialization
+  of the registers) and lines 14 to 16 (decrementing the register group)
+  are new.\\
+  {\aslabarrow} Adjust your file \code{led_pin2_delay.s} accordingly.
+\end{numlist}
+\end{region}
+
+\begin{region}[pitch=13.2]{149.3}
+\begin{numlist}[start=2]
+\item The project companion explains in detail how to decrement a register
+  group correctly. Here you are to verify the following claim
+  experimentally (it only holds for n > 0):
+\end{numlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{189.7}
+\hltext{If {\ttfamily r24} is initialized with \textbf{n}, one pass of the outer
+loop takes exactly \textbf{6·n + 7} clock cycles.}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{217.2}
+\hltext{It follows that pin~2 stays HIGH for \textbf{6·n + 7} clock cycles and
+then LOW for just as long.}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{243.7}
+Fill in this table (1 clock cycle takes 62.5\,ns):
+\end{region}
+
+\begin{region}{284.1}
+\begin{numlist}[start=3]
+\item \textbf{Now calculate the value n at which pin~2 blinks at a rate of
+  exactly 1\,Hz.}
+\end{numlist}
+\end{region}
+
+\pagedraw{
+  \fill[tablegray] (87.2,325.1) rectangle (529.3,345.5);
+  \foreach \y in {293.1,325.1,345.5,365.9}
+    \draw[tline] (86.7,\y) -- (529.8,\y);
+  \foreach \x in {87.2,112.5,173.8,332.8,438.4,529.3}
+    \draw[tline] (\x,292.6) -- (\x,366.4);
+}
+
+\begin{region}[x=87.2,width=25.3,free]{306.8}\cell\centering n\end{region}
+\begin{region}[x=116.5,width=53.3,free]{306.6}\raggedleft 6·n + 7\end{region}
+\begin{region}[x=178.1,width=152,free]{306.8}\cell
+Exact duration for 6·n + 7 cycles
+\end{region}
+\begin{region}[x=332.8,width=105.6,free]{306.8}\cell\centering
+Measured\\HIGH duration
+\end{region}
+\begin{region}[x=438.4,width=90.9,free]{306.8}\cell\centering
+Measured\\LOW duration
+\end{region}
+\begin{region}[x=87.2,width=25.3,free]{338.9}\cell\centering 1\end{region}
+\begin{region}[x=87.2,width=25.3,free]{359.3}\cell\centering 2\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.1]{389.7}
+For this to work, the pin must be HIGH for 500\,ms and LOW for 500\,ms. To
+do so, solve the equation:
+\end{region}
+
+\begin{region}[x=74.7,right=0]{429.2}
+(6·n + 7) × 62.5\,ns = 500\,ms = 500000000\,ns
+\end{region}
+
+\begin{region}[x=74.7,right=0]{456.2}
+\begin{arrowlist}
+\item Calculate the matching value for n.
+\end{arrowlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{469.4}
+\begin{arrowlist}
+\item If n is not an integer, round it to an integer.
+\end{arrowlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.5]{482.5}
+\begin{arrowlist}
+\item Initialize the counter accordingly, flash the program, and check with
+  the oscilloscope whether the signal matches your expectation.
+\end{arrowlist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=12.5]{508.9}
+\begin{arrowlist}
+\item Additionally, connect an LED with a series resistor to pin~2 and
+  watch it blink at 1\,Hz -- hopefully pleasantly slowly and evenly.
+\end{arrowlist}
+\end{region}
+
+\end{document}

@@ -1,0 +1,35 @@
+% Flowchart of led_pin2_delay.s: outer loop toggles pin 2, inner loop
+% counts r24 down to zero
+\begin{tikzpicture}[node distance=0.85cm and 0.8cm,
+    box/.style={flowbox, minimum width=5.8cm}]
+\node (step1) [box]
+    {\texttt{ldi r19, 4}\\\small r19 = mask for pin 2 ($4 = 2^2$)\\\small 1 cycle};
+\node (step2) [box, below=of step1]
+    {\texttt{out 0x0a, r19}\\\small Pin 2 as output\\\small 1 cycle};
+\node (step3) [box, below=of step2]
+    {\texttt{ldi r18, 0}\\\small r18 = 0\\\small 1 cycle};
+\node (step4) [box, below=of step3]
+    {\texttt{eor r18, r19}\\\small r18 = r18 XOR r19\\\small 1 cycle};
+\node (step5) [box, below=of step4]
+    {\texttt{out 0x0b, r18}\\\small Set pin 2 (HIGH/LOW)\\\small 1 cycle};
+\node (step6) [box, below=of step5]
+    {\texttt{ldi r24, 0x02}\\\small r24 = 0x02 (counter, here $n=2$)\\\small 1 cycle};
+\node (step7) [box, below=of step6]
+    {\texttt{subi r24, 1}\\\small r24 = r24 - 1\\\small 1 cycle};
+\node (step8) [flowjump, below=of step7]
+    {\texttt{brne delay}\\\small Back if r24 $\neq$ 0 (2 cycles)\\\small
+     Otherwise continue (1 cycle)};
+\node (step9) [flowjump, below=of step8]
+    {\texttt{rjmp loop}\\\small back to \texttt{eor r18, r19}\\\small 2 cycles};
+\draw [flowarrow] (step1) -- (step2);
+\draw [flowarrow] (step2) -- (step3);
+\draw [flowarrow] (step3) -- (step4);
+\draw [flowarrow] (step4) -- (step5);
+\draw [flowarrow] (step5) -- (step6);
+\draw [flowarrow] (step6) -- (step7);
+\draw [flowarrow] (step7) -- (step8);
+\draw [flowarrow] (step8) -- (step9) node[midway, right] {\small if r24 = 0};
+\draw [flowarrow] (step8.east) -- ++(2.5,0)
+    |- (step7.east) node[midway, above] {\small if r24 $\neq$ 0};
+\draw [flowarrow] (step9.east) -- ++(5.5,0) |- (step4.east);
+\end{tikzpicture}
