@@ -1,0 +1,1017 @@
+% Applied Software Development Lab -- Lab Handout 8: Things get vaporized
+% Copyright (c) Michael Lehn. Licensed under CC BY-SA 4.0.
+%
+% Region coordinates (bp from the top of the page) follow the page layout of
+% the original German handout "Laborblatt 8".
+\documentclass{aslab}
+\usepackage{unicode-math}
+\setmathfont{texgyretermes-math.otf}[Scale=1.2]
+\newfontfamily\figserif{TeX Gyre Termes}
+\sethandout{8}{Things get vaporized}
+\graphicspath{{../figures/handout08/}}
+
+%% inline code in bold lines (the original keeps it in regular weight)
+\newcommand*\codemd[1]{{\mdseries\codearg{#1}}}
+%% Python listings with the color scheme of the original
+\makeatletter
+\newcommand*\regionpitch{\baselineskip=\aslab@pitch\relax}
+\makeatother
+\lstdefinestyle{py}{style=aslab,sensitive=true,escapechar=|,
+  basicstyle=\ttfamily\regionpitch,
+  morekeywords=[1]{class,def,if,elif,else,for,while,or,and,in,return,not,
+    continue},
+  keywordstyle=[1]\color{codeorange},
+  morekeywords=[2]{import,from},keywordstyle=[2]\color{codemagenta},
+  morekeywords=[3]{None,True,False,range,len,int},
+  keywordstyle=[3]\color{codecyan},
+  morecomment=[l]\#,commentstyle=\color{codepurple},
+  alsoletter={0123456789},emphstyle=\color{codered},
+  emph={0,1,2,3,4,5,6,7,8,9,01,10,20,30,80,100,105,165,200,223,255,300,400,
+    570,600,800}}
+\newcommand*\cy[1]{\textcolor{codecyan}{#1}}
+%% numbered listing (11bp)
+\lstdefinestyle{pyn}{style=py,numbers=left,
+  numberstyle=\ttfamily\color{codeorange},numbersep=6.6bp,xleftmargin=26.4bp}
+%% numbered listing (10bp)
+\lstdefinestyle{pynsmall}{style=py,numbers=left,
+  basicstyle=\fontsize{10bp}{11bp}\selectfont\ttfamily\regionpitch,
+  numberstyle=\fontsize{10bp}{11bp}\selectfont\ttfamily\color{codeorange},
+  numbersep=6bp,xleftmargin=24bp}
+%% plain (uncolored) code
+\lstdefinestyle{plain}{style=aslab,escapechar=|,
+  basicstyle=\ttfamily\regionpitch}
+
+%% lists of this handout
+\newlist{ntasks}{enumerate}{2}
+\setlist[ntasks]{label={\arabic*.},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+\newlist{alist}{enumerate}{1}
+\setlist[alist]{label={(\Alph*)},leftmargin=18bp,labelsep=*,align=left,
+  labelindent=0pt}
+\newcommand*\dsh{{\fontsize{13.2bp}{12bp}\selectfont -}}
+\newlist{dlist}{itemize}{3}
+\setlist[dlist]{label={\dsh},leftmargin=12bp,labelsep=*,align=left,
+  labelindent=0pt}
+\lineskiplimit=-\maxdimen
+\normallineskiplimit=-\maxdimen
+
+\begin{document}
+%% ===================================================================== 1 ==
+\maketitleblock
+
+\begin{region}{124.0}
+\heading{Learning objectives}
+\end{region}
+
+\begin{region}[pitch=13]{138.5}
+{\color{aslabblue}\bfseries
+\begin{dashlist}
+\item Deepening object-oriented programming
+\item Refactoring existing programs
+\item Incremental software development: small changes, testing, and versioning
+\end{dashlist}\par}
+\end{region}
+
+\begin{region}{191.5}
+\heading{Step 1: Cloning your own repository}
+\end{region}
+
+\begin{region}[pitch=13.17]{219.1}
+Today, too, we are working ``only'' with Python. The goal is to add new
+features. For example, balls that you miss with the paddle should disappear at
+the bottom edge. And -- as you would expect from Breakout -- there should be
+stones (bricks) that disappear when the ball hits them. The ball is reflected
+in the process.
+\end{region}
+
+\begin{region}[pitch=13.3]{285.2}
+Our project currently consists of only a few modules (\code{ball.py},
+\code{breakout.py}, \code{controller.py}, \code{game.py}, \code{paddle.py},
+\code{rocket.py}, \code{serial-reader.py}). Still, you should not underestimate how
+hard it is to keep track of a program that consists of several parts -- even
+if each file is only a few lines long.
+\end{region}
+
+\begin{region}{351.5}
+You need
+\end{region}
+
+\begin{region}[pitch=14.3]{364.6}
+\begin{dashlist}
+\item on the one hand, an eye for the \textbf{big picture}: What does each
+  module do?
+\item on the other hand, an eye for \textbf{detail}: How does the module do
+  what it is supposed to do?
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.15]{406.4}
+You have to switch flexibly back and forth between these two levels. Beyond a
+certain level of complexity, keeping both in mind at the same time is neither
+possible nor necessary. This is the skill we want to train in the first step.
+\end{region}
+
+\begin{region}[pitch=13.2]{459.0}
+We proceed as follows: start the game, observe what it can do, then skim the
+code to recapitulate its structure.
+\end{region}
+
+\begin{region}[pitch=13.3]{499.5}
+\subheading{Preparation: Opening two terminals}
+As always: left terminal for editing, right terminal for running commands.
+\end{region}
+
+\begin{region}[pitch=14.3]{540.1}
+\subheading{Right terminal (cloning the repository and starting the game)}
+First, clone your repository with
+\end{region}
+
+\begin{region}{567.9}
+\code{git clone https://gitlab.uni-ulm.de/USERNAME/asp-ulm}
+\end{region}
+
+\begin{region}[pitch=13.5]{581.1}
+Use \code{cd asp-ulm/python} to change into the Python directory, and then
+start the game with \code{python breakout.py}.
+\end{region}
+
+\begin{region}{621.1}
+You should observe:
+\end{region}
+
+\begin{region}[pitch=14]{633.7}
+\begin{dashlist}
+\item The balls are cleanly reflected at all edges (top, bottom, left, right).
+  More precisely: the \textbf{center} of the balls always stays within the
+  drawing surface -- this was taken into account in the reflection.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=15.3]{674.8}
+\begin{dashlist}
+\item You can make the ball bounce off the \textbf{paddle}. But ``angle of
+  incidence = angle of reflection'' does \textbf{not} apply here:
+\end{dashlist}
+\end{region}
+
+\begin{region}[x=68.7,right=0,pitch=14.25]{702.8}
+\begin{dashlist}
+\item If you hit the ball in the middle, it flies straight up.
+\item Far left $\rightarrow$ 30° to the left.
+\item Far right $\rightarrow$ 30° to the right.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.3]{745.8}
+\begin{dashlist}
+\item With the \textbf{up arrow key}, the paddle fires rockets (small discs)
+  that fly straight up and disappear at the top edge.
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 2 ==
+\begin{region}[pitch=14.3]{69.4}
+\subheading{Left terminal (examining the code)}
+Now the point is to understand \textbf{how} these features were implemented.
+There is no ``right'' or ``wrong'' here -- that depends on style, taste, and
+also on the state of the project.
+\end{region}
+
+\begin{region}{123.4}
+One possible way is the top-down approach:
+\end{region}
+
+\begin{region}[pitch=13.37]{136.8}
+\begin{tasks}
+\item Start with the main loop in \code{breakout.py}.
+\item Among other things, you will see: there are classes such as \code{Ball}
+  and \code{Rocket}, of which several instances are created, each with a
+  \code{draw} and a \code{move} method.
+\item There is also the class \code{Paddle}, of which there is only one
+  instance -- with (static) methods such as \code{left}, \code{right}, and
+  \code{draw}.
+\item Then you can go through the files \code{ball.py}, \code{rocket.py}, and
+  \code{paddle.py} one by one.
+\item While reading, keep asking yourself questions such as:
+  \begin{bullets}
+  \item ``Why did I do it this way back then?''
+  \item ``What exactly does this or that mean in Python again?''
+  \item ``How are the modules connected to each other?''
+  \end{bullets}
+\end{tasks}
+\end{region}
+
+\begin{region}[pitch=13.93]{283.7}
+You may notice: some modules such as \code{controller.py} or
+\code{serial_reader.py} are \textbf{not used at all} when the game starts.
+This is not a mistake -- these files concern the \textbf{serial connection},
+which will later allow you to control the game with a \textbf{game
+controller} instead of the keyboard.
+\end{region}
+
+\begin{region}[pitch=14.25]{352.8}
+Today, however, it is \textbf{only} about the game features. It is perfectly
+sufficient if you roughly recall \emph{what} these modules are meant for. You
+do not need to look at them in detail today.\\
+\textbf{One thing at a time.}
+\end{region}
+
+\begin{region}[pitch=13.23]{409.8}
+\subheading{Task}
+Go through this process on your own. Start the game, observe its behavior, and
+examine the code.\\
+If anything is unclear -- ask!
+\end{region}
+
+\begin{region}[pitch=13.3]{490.0}
+\heading{Remark}
+While looking through the code, we came across a variant like this:
+\end{region}
+
+\begin{region}[pitch=13.2]{529.9}
+\begin{lstlisting}[style=plain]
+for r in rockets:
+    r.draw()
+    r.move()
+    rockets = [item for item in rockets if item.alive]
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=14.28]{596.6}
+In Python, this \textbf{seemingly works without problems}, even though the
+list \code{rockets} is \textbf{modified during the iteration}. The reason: in
+each pass of the loop, a \textbf{new list} is created and the name
+\code{rockets} is rebound -- but the loop \textbf{keeps running over the
+original iterator}, which still refers to the old list. So it only works
+because Python allows \textbf{inefficient (and potentially confusing)} code.
+\end{region}
+
+\begin{region}[pitch=13.2]{680.4}
+\begin{lstlisting}[style=plain]
+for r in rockets:
+    r.draw()
+    r.move()
+rockets = [item for item in rockets if item.alive]
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=13.6]{747.1}
+Here, \textbf{all rockets are first moved and drawn}, and \textbf{then} all
+rockets that are no longer visible (\code{alive == False}) are removed.
+\end{region}
+
+\begin{region}{778.3}
+This is \textbf{more efficient} and \textbf{easier to understand} -- also for
+your future self in a few weeks \emoji{1F609}
+\end{region}
+
+\nextpage
+%% ===================================================================== 3 ==
+\begin{region}{69.4}
+\heading{Step 2: Balls you miss \dots}
+\end{region}
+
+\begin{region}{97.0}
+Now we test whether recapitulating in the first step has paid off.
+\end{region}
+
+\begin{region}[pitch=13.4]{124.3}
+\textbf{Goal:} If you miss a ball with the paddle, it should disappear as soon
+as it reaches the bottom edge of the drawing surface. Among other things, this
+means: the corresponding ball object should be removed from the list
+\code{balls}.
+\end{region}
+
+\begin{region}[pitch=13.4]{178.4}
+\subheading{Task}
+Implement this feature:
+\end{region}
+
+\begin{region}[pitch=13.4]{204.4}
+\begin{dashlist}
+\item Detect when a ball is ``lost'' (e.g., based on its y-position).
+\item Remove the corresponding object from the list \code{balls}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.25]{232.6}
+\textbf{Tip:} Think about \textbf{how this was done for the rockets}. There,
+too, objects disappear when they reach the edge. The goal is to understand
+this mechanism and \textbf{transfer it to the balls in the same way}.
+\end{region}
+
+\begin{region}[pitch=14.3]{288.5}
+If you have \textbf{questions}, let us know. If you think everything works,
+\textbf{show us} what you have changed. \textbf{Once we give you the OK},
+off to the repository:
+\end{region}
+
+\begin{region}[pitch=13.2]{316.4}
+\code{git commit -m "ball disappears"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 4 ==
+\begin{region}{69.4}
+\heading{Step 3: Space Invaders in Breakout?}
+\end{region}
+
+\begin{region}[pitch=13.2]{97.0}
+Why not? This is an invasion in the truest sense of the word -- and at the
+same time a good moment to notice how much it pays off to have looked at the
+existing code beforehand.
+\end{region}
+
+\begin{region}[pitch=13.25]{150.7}
+\textbf{Idea:} Analogous to the class \code{Ball}, you can now program a
+class \code{Ship}.\\
+Each object of this class represents a spaceship that moves across the
+drawing surface -- just like the ``invaders'' in the classic game.
+\end{region}
+
+\begin{region}[pitch=14.0]{204.4}
+\subheading{Movement along a curve}
+Of course, the spaceships should \textbf{not simply move in a straight line}
+-- that would make them too easy to hit. Instead, you can let them fly along
+an interesting curve. A nice option is the so-called \textbf{lemniscate of
+Gerono}. The trace of this curve looks like a \textbf{figure eight lying on
+its side}:
+\end{region}
+
+\placefigure{56.7}{264.4}{477.4}{lemniscate.tex}
+
+\begin{region}{642.8}
+The curve is parametrized by time (with $t$ as the time) and reads:
+\end{region}
+
+\begin{region}{673.1}
+\centering $x(t) = x_0 + a\cdot\cos t,\quad y(t) = y_0 + b\cdot\sin 2t$
+\end{region}
+
+\begin{region}{700.9}
+This means: the spaceship moves within a rectangle with the corners:
+\end{region}
+
+\begin{region}[pitch=18.37]{717.1}
+\begin{dashlist}
+\item \textbf{Top left:} $(x_0-a, y_0-b)$
+\item \textbf{Bottom left:} $(x_0-a, y_0+b)$
+\item \textbf{Bottom right:} $(x_0+a, y_0+b)$
+\item \textbf{Top right:} $(x_0+a, y_0-b)$
+\end{dashlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 5 ==
+\begin{region}{69.4}
+\subheading{Task: Bringing spaceships into the game}
+\end{region}
+
+\begin{region}[pitch=13.3]{89.6}
+Write a new class \code{Ship} -- analogous to the class \code{Ball}. A
+spaceship moves along a lemniscate and can (later) be shot down.
+\end{region}
+
+\begin{region}[pitch=13.5]{123.6}
+\subheading{Part 1: Creating the class Ship}
+Create a new file \code{ship.py} and define a class \code{Ship} in it.\\
+Since this class is very similar to the class \code{Ball}, you can simply
+start with a copy:
+\end{region}
+
+\begin{region}{170.7}
+\code{cp ball.py ship.py}
+\end{region}
+
+\begin{region}{190.6}
+Then modify the file step by step:
+\end{region}
+
+\begin{region}{211.3}
+\begin{alist}[label={\bfseries(\Alph*)}]
+\item \textbf{Constructor}
+\end{alist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{224.6}
+A spaceship should be created like this:
+\begin{lstlisting}[style=plain]
+ship = Ship(0)
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{254.6}
+The parameter \code{0} stands for the initial value of the time $t=0$.
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.45]{275.0}
+The class should have the following attributes:
+\begin{lstlisting}[style=plain]
+self.x0 = Game.width / 2
+self.y0 = Game.height / 3
+self.a = 0.9 * Game.width / 2
+self.b = 0.9 * Game.height / 3
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.35]{355.4}
+In addition, you need:
+\begin{lstlisting}[style=plain]
+self.t = t                  # current value of the time
+self.alive = True           # False means shot down
+self.x, self.y = None, None # current position (set in move)
+self.move()                 # call move to set the position
+\end{lstlisting}
+\end{region}
+
+\begin{region}{429.2}
+\begin{alist}[start=2,label={\bfseries(\Alph*)}]
+\item \textbf{Method \codemd{move(self)}}
+\end{alist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.25]{442.5}
+Here you compute the new position along the lemniscate:
+\begin{lstlisting}[style=py]
+def |\cy{move}|(self):
+    self.x = self.x0 + self.a * math.cos(self.t)
+    self.y = self.y0 + self.b * math.sin(2 * self.t) / 2
+    self.t += 0.01
+    while self.t > 2 * math.pi:
+        self.t -= 2 * math.pi
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.2]{538.2}
+Resetting $t$ to the interval $[0,2\pi)$ is \textbf{not strictly necessary} --
+Python has no problem with numbers growing arbitrarily large (and don't worry:
+in this case, the memory will not fill up in your lifetime \emoji{1F604}).
+But: it is more elegant and saves memory -- and it makes a true engineer's
+heart beat faster \emoji{2705}
+\end{region}
+
+\begin{region}{613.0}
+\begin{alist}[start=3,label={\bfseries(\Alph*)}]
+\item \textbf{Method \codemd{draw(self)}}
+\end{alist}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{626.3}
+Simply draw the spaceship as a disc with a larger radius than the ball -- and
+preferably in a different color.
+\end{region}
+
+\begin{region}[pitch=13.6]{666.7}
+\subheading{Part 2: Building the spaceships into the game}
+Now the spaceships have to be integrated into \code{breakout.py} -- analogous
+to the balls:
+\end{region}
+
+\begin{region}[pitch=13.4]{693.8}
+\begin{ntasks}
+\item Importing the class:\ \ \code{from ship import Ship}
+\item Creating a list of ships, e.g., \code{ships = [Ship(0), Ship(0.5), Ship(1)]}
+\item Moving, drawing, and removing ships that have been shot down from the
+  list
+\end{ntasks}
+\end{region}
+
+\begin{region}[pitch=13.5]{740.3}
+Once your code runs:
+\end{region}
+
+\begin{region}[pitch=13.2]{753.8}
+\code{git add ship.py}\\
+\code{git commit -a -m "spaceships!"}\\
+\code{git push}
+\end{region}
+
+\nextpage
+%% ===================================================================== 6 ==
+\begin{region}{69.4}
+\heading{Step 4: Now it's getting serious!}
+\end{region}
+
+\begin{region}[pitch=13.7]{90.3}
+Of course, you should be able to \textbf{shoot down a spaceship} with a
+\textbf{ball} or a \textbf{rocket}. This works by checking whether the
+distance between a spaceship and a ball or a rocket is \textbf{small enough}.
+\end{region}
+
+\begin{region}{138.6}
+Here is an example of how to check whether a \textbf{ball} has come too close
+to a \textbf{spaceship}:
+\end{region}
+
+\begin{region}{152.2}
+\begin{lstlisting}[style=py]
+    for s in ships:
+\end{lstlisting}
+\end{region}
+
+\begin{region}{165.4}
+\begin{lstlisting}[style=py]
+        for b in balls:
+            dist = math.hypot(b.x - s.x, b.y - s.y)
+            if dist <= 20:
+                s.alive = False
+\end{lstlisting}
+\end{region}
+
+\begin{region}[pitch=14.3]{220.6}
+\subheading{What exactly happens here?}
+We want to find out whether a \textbf{ball has hit a spaceship}. To do so, we
+have to calculate, for \textbf{every spaceship}, the distance to \textbf{every
+ball}. For this purpose, two loops are \textbf{nested inside each other}:
+\end{region}
+
+\begin{region}[pitch=14.4]{276.8}
+\begin{dashlist}
+\item The \textbf{outer loop} runs with the variable \code{s} over all
+  spaceships in the list \code{ships}.
+\item For \textbf{each individual value of} \code{s}, the \textbf{inner loop}
+  runs with the variable \code{b} over all balls in the list \code{balls}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.23]{319.8}
+So in the \textbf{innermost loop}, there is always exactly \textbf{one
+spaceship} \code{s} and one ball \code{b} -- for every possible pair of
+spaceship and ball.\\
+Then the distance between these two points is calculated with good old
+Pythagoras:
+\end{region}
+
+\begin{region}{381.2}
+\centering $\text{dist} = \sqrt{(\text{b.x} - \text{s.x})^2
+  + (\text{b.y} - \text{s.y})^2}$
+\end{region}
+
+\begin{region}[pitch=13.2]{407.1}
+If the distance is less than or equal to 20, the spaceship has been hit. Why
+20? In my version, a ball has radius 5 and a spaceship has radius 15.
+\end{region}
+
+\begin{region}{447.6}
+\subheading{Task:}
+\end{region}
+
+\begin{region}{468.4}
+\begin{ntasks}
+\item \textbf{Import} the module \code{math} in \code{breakout.py}, if you
+  have not done so yet:
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{488.6}
+\begin{lstlisting}[style=py]
+import math
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{509.4}
+\textbf{Insert the above code} at a suitable place in the main loop:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.25]{523.7}
+\begin{bullets}
+\item \textbf{after} all objects have been moved and drawn
+\item \textbf{before} the lists \code{balls} and \code{ships} are cleaned up
+  (i.e., the ``corpses'' are removed)
+\end{bullets}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{552.2}
+\textbf{Test} whether you can now shoot down a spaceship with a ball.
+\end{region}
+
+\begin{region}[pitch=13.85]{565.5}
+\begin{ntasks}[start=2]
+\item Actually, the point of the rockets was to be able to shoot something
+  down with them.\\
+  Change the code so that the inner loop iterates over the list
+  \code{rockets} instead of \code{balls}. \textbf{Test} whether you can now
+  shoot down a spaceship with a rocket.
+\end{ntasks}
+\end{region}
+
+\begin{region}[pitch=13.25]{607.4}
+\begin{ntasks}[start=3]
+\item It would of course be even better if you could shoot down a spaceship
+  \textbf{with both a ball and a rocket} -- without duplicate code.\\
+  An obvious approach would be, for example, the following:
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{653.9}
+\begin{lstlisting}[style=py]
+      for b in [balls, rockets]:
+            |…|
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=14.3]{687.6}
+You might think that this iterates over \textbf{all balls and all rockets}.
+\textbf{But convince yourselves that this does not work!}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{729.3}
+\subheading{So what really happens here?}
+\code{[balls, rockets]} is a list that contains exactly two elements: namely
+the list \code{balls} and the list \code{rockets}. This means: the loop runs
+twice -- once with \code{b = balls}, once with \code{b = rockets} -- and
+\code{b} is then a whole list each time, not a single object.
+\end{region}
+
+\nextpage
+%% ===================================================================== 7 ==
+\begin{region}[pitch=13.5]{68.8}
+\begin{ntasks}[start=4]
+\item With \code{balls + rockets}, you create a new list that contains all
+  elements of \code{balls} and of \code{rockets}.
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{108.7}
+So if you write:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{135.3}
+\begin{lstlisting}[style=py]
+for s in ships:
+    for b in balls + rockets:
+        dist = math.hypot(b.x - s.x, b.y - s.y)
+        if dist <= 20:
+            s.alive = False
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=17.5]{214.2}
+then everything should work as intended: you can vaporize a spaceship with a
+ball as well as with a rocket \emoji{1F4A5}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{260.6}
+Test whether this works. If so -- then you know that the effort has paid off.
+And then, as always, into the repository with it:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.5]{300.4}
+\code{git commit -a -m "shoot to kill"}\\
+\code{git push}
+\end{region}
+
+\begin{region}{341.0}
+\heading{Step 5: Bricks!}
+\end{region}
+
+\begin{region}[pitch=17.7]{369.5}
+Now a \textbf{wall of stones (bricks)} enters the game -- which of course
+makes sense if the game is called \textbf{Breakout} \emoji{1F609}
+\end{region}
+
+\begin{region}[pitch=14.3]{403.9}
+In a \textbf{first version}, the balls should simply still \textbf{fly
+through the bricks}. At first, the point is \textbf{not} the collision, but
+rather:
+\end{region}
+
+\begin{region}{435.8}
+\emoji{1F9E9} \textbf{Where on the drawing surface is there a brick -- and
+where not?}
+\end{region}
+
+\begin{region}[pitch=14.03]{466.8}
+\subheading{The grid}
+For simplicity, a \textbf{brick} in our case is \textbf{80 pixels wide} and
+\textbf{20 pixels high}. Since the drawing surface is \textbf{800 pixels
+wide} and \textbf{600 pixels high}, this results in a \textbf{grid with 10
+columns and 30 rows}. Of course, not every cell in this grid is occupied by a
+brick.\\
+For example, only a few of the rows could contain bricks at first -- as in
+the following sketch:
+\end{region}
+
+\placefigure{56.7}{526.8}{481.9}{brick-grid.tex}
+
+\nextpage
+%% ===================================================================== 8 ==
+\begin{region}[pitch=14.3]{82.6}
+\subheading{A bit of mathematics}
+A \textbf{grid} with \textbf{10 columns} and \textbf{30 rows}, in which each
+cell either contains a brick or not, can be thought of as a
+\textbf{matrix}.\\
+Each entry is then either \code{1} $\rightarrow$ brick present, or \code{0}
+$\rightarrow$ no brick present. And because we, as mathematicians, value
+precision and conventions: we speak of a \textbf{30\,×\,10 matrix} (rows ×
+columns).
+\end{region}
+
+\begin{region}[pitch=13.6]{175.2}
+\textbf{Implementation in Python: \codemd{numpy}}\\
+In Python, the module \code{numpy} lets you work with matrices very
+efficiently. For our purposes, we only need:
+\end{region}
+
+\begin{region}[pitch=14.3]{215.2}
+\begin{dashlist}
+\item a \textbf{zero-initialized 30\,×\,10 matrix}.
+\item \textbf{Indexing} starts \textbf{at 0}: the row index runs from 0 to 29,
+  the column index from 0 to 9.
+\item access to individual entries for \textbf{reading and writing}.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.6]{265.6}
+\textbf{The class \codemd{Wall}}\\
+Create a new file \code{wall.py} and write the following code in it:
+\end{region}
+
+\begin{region}[pitch=13]{293.1}
+\begin{lstlisting}[style=pynsmall]
+import pygame
+import numpy
+from game import Game
+
+class |\cy{Wall}|:
+    brick = numpy.zeros((30, 10))
+
+    def |\cy{init}|():
+        for i in range(4, 8):
+            for j in range (0, 10):
+                Wall.brick[i, j] = 1
+
+    def |\cy{draw}|():
+        for i in range(0, Wall.brick.shape[0]):
+            for j in range(0, Wall.brick.shape[1]):
+                if Wall.brick[i, j] == 0:
+                    continue
+                w = 80
+                h = 20
+                x = j * w
+                y = i * h
+                r = (x + 1, y + 1, w - 1, h - 1)
+                pygame.draw.rect(Game.screen, (223, 105, 165), r)
+\end{lstlisting}
+\end{region}
+
+\begin{region}{599.9}
+\textbf{Explanation of \codemd{wall.py}}
+\end{region}
+
+\begin{region}[pitch=13.65]{613.3}
+\begin{dlist}
+\item In \textbf{line 2}, the module \code{numpy} is imported.
+\item The class has a \textbf{class attribute} \code{brick}, which is a
+  \textbf{30\,×\,10 matrix full of zeros}.
+\item The method \code{init} sets all matrix entries in \textbf{rows 4 to 7}
+  to \code{1} -- that is where the bricks are!
+\item The method \code{draw} draws the wall:
+  \begin{dlist}
+  \item With \code{Wall.brick.shape[0]} and \code{Wall.brick.shape[1]}, you
+    query the number of rows and the number of columns, respectively.
+  \item Two nested loops run through the matrix.
+  \item \code{i} stands for the \textbf{row index}, \code{j} for the
+    \textbf{column index}.
+  \item If the entry is \code{0}, \code{continue} jumps to the next loop
+    iteration.
+  \item Otherwise, a rectangle is drawn:
+    \begin{dlist}
+    \item width \code{w = 80}, height \code{h = 20}
+    \item top left corner at \code{x = j * w}, \code{y = i * h}
+    \item slightly shifted (\code{+1}) and reduced in size (\code{-2}) for
+      visible gaps
+    \end{dlist}
+  \end{dlist}
+\end{dlist}
+\end{region}
+
+\nextpage
+%% ===================================================================== 9 ==
+\begin{region}{69.4}
+\subheading{Tasks:}
+\end{region}
+
+\begin{region}[pitch=13.9]{96.9}
+\begin{ntasks}
+\item \textbf{Build the brick wall into the game} by integrating the class
+  Wall into \code{breakout.py}:
+  \begin{alist}
+  \item Import the class at the beginning of the file:
+    \code{from wall import Wall}
+  \item After \code{Game.init()}, also call the initialization of the wall:
+    \code{Wall.init()}
+  \item Within the main loop, also call \code{Wall.draw()} -- preferably
+    \textbf{after the balls have been drawn}: Wall.draw()
+  \end{alist}
+\end{ntasks}
+\end{region}
+
+\begin{region}[pitch=13.45]{166.7}
+\begin{ntasks}[start=2]
+\item \textbf{Test} whether the brick wall is displayed as expected.\\
+  If everything works -- into the repository:\\
+  \code{git add wall.py}\\
+  \code{git commit -a -m "the wall is up"}\\
+  \code{git push}
+\end{ntasks}
+\end{region}
+
+\begin{region}{260.7}
+\heading{Step 6: Now we clear the bricks out of the way!}
+\end{region}
+
+\begin{region}[pitch=14.1]{287.2}
+The bricks are currently pure decoration. In this step, they are to fulfill
+their purpose: \textbf{they are to be smashed by the balls.}
+\end{region}
+
+\begin{region}[pitch=13.25]{328.8}
+Of course, one could calculate exactly \textbf{whether and where a ball hits a
+brick}: after all, for each frame we know the old and the new position of a
+ball. From this, one could calculate which edge of a brick is crossed.
+\end{region}
+
+\begin{region}{372.8}
+\emoji{1F4A1} Anyone who feels like a little math puzzle is welcome to
+``solve for x'' on their own.
+\end{region}
+
+\begin{region}{402.6}
+We make it easier for ourselves at this point -- with an
+\textbf{approximation}:
+\end{region}
+
+\begin{region}[pitch=14.3]{422.6}
+\begin{dashlist}
+\item From the \textbf{old position} \code{x1}, \code{y1} of the ball, we
+  calculate \textbf{in which grid cell} the ball was before: this gives a pair
+  \code{i1}, \code{j1} (row, column).
+\item From the \textbf{new position} \code{x2}, \code{y2}, we calculate
+  accordingly which \textbf{grid cell} the ball has now entered: this gives a
+  pair \code{i2}, \code{j2} (row, column).
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=14.25]{485.7}
+If the ball moves \textbf{from one cell into another cell with a brick}, we
+assume that a brick was smashed in the process -- and \textbf{set the entry in
+the matrix} \code{Wall.brick[i2, j2]} to 0.
+\end{region}
+
+\begin{region}{541.6}
+\textbf{And there is more:} We can even estimate approximately \textbf{how}
+the brick was hit:
+\end{region}
+
+\begin{region}[pitch=13.8]{555.0}
+\begin{dashlist}
+\item If \code{i1 ≠ i2}, the \textbf{top or bottom edge} was probably smashed
+  through.
+\item If \code{j1 ≠ j2}, the \textbf{left or right edge} was probably smashed
+  through.
+\item If both \code{i1 ≠ i2} and \code{j1 ≠ j2} hold, a corner would even
+  have to have been hit, which, however, is rather rare in practice. Such cases
+  also clearly show the limits of this approximation.
+\end{dashlist}
+\end{region}
+
+\begin{region}[pitch=13.3]{637.5}
+\textbf{The following sketch shows three typical cases} -- and helps you get
+a feeling for how well (or how poorly) this method works in practice:
+\end{region}
+
+\placegraphic{56.7}{654.6}{481.9}{brick-cases.png}
+
+\nextpage
+%% ==================================================================== 10 ==
+\begin{region}{69.4}
+\textbf{How do you calculate the column and row in the grid from the
+(x,\,y) coordinates?}
+\end{region}
+
+\begin{region}[pitch=14.6]{89.4}
+\begin{dashlist}
+\item If you divide the \textbf{x-coordinate} by the \textbf{width} of a cell
+  and round the result down to an integer, you get the \textbf{column}. In
+  Python, this is easily done with integer division (\code{//}).
+\item The same applies to the \textbf{y-coordinate}: if you divide it by the
+  \textbf{height} of a cell and round down, you get the \textbf{row}.
+\end{dashlist}
+\end{region}
+
+\begin{region}{153.0}
+Add the following class method to the class Wall:
+\end{region}
+
+\begin{region}{173.0}
+\begin{lstlisting}[style=pyn,firstnumber=13]
+    def |\cy{collision}|(x2, y2):
+\end{lstlisting}
+\end{region}
+
+\begin{region}{186.2}
+\begin{lstlisting}[style=pyn,firstnumber=14]
+        j2 = int(x2) // 80
+        i2 = int(y2) // 20
+        if i2 >= 0 and i2 < 30 and j2 >= 0 and j2 < 10:
+            if Wall.brick[i2, j2]:
+                Wall.brick[i2, j2] = 0
+\end{lstlisting}
+\end{region}
+
+\begin{region}{252.9}
+\subheading{What does this method do?}
+\end{region}
+
+\begin{region}[pitch=13.75]{265.0}
+\begin{dashlist}
+\item In this version, \code{collision} is initially passed only the
+  \textbf{new position} \code{(x2, y2)} of the ball.
+\item In \textbf{lines 14 and 15}, the column \code{j2} and the row \code{i2}
+  are calculated from \code{x2} and \code{y2} -- by integer division by the
+  cell width and cell height, respectively.
+\item In \textbf{line 16}, we check whether \code{i2} and \code{j2} are valid
+  indices in the grid at all -- because the ball may already be
+  \textbf{outside} the drawing surface (e.g., before the correction at the
+  walls).
+\item In \textbf{line 17}, we check whether \textbf{there is a brick in the
+  cell that was hit}.
+\item In \textbf{line 18}, this brick is then removed -- so we ``vaporize''
+  the brick by setting the matrix entry to \code{0}.
+\end{dashlist}
+\end{region}
+
+\begin{region}{411.2}
+\subheading{Tasks:}
+\end{region}
+
+\begin{region}[pitch=13.5]{431.3}
+\begin{ntasks}
+\item In the \code{move} method of the class \code{Ball}, we now want to check
+  whether the ball hits a brick. Only a few changes in \code{ball.py} are
+  needed for this:
+  \begin{alist}
+  \item The class \code{Wall} has to be imported: \code{from wall import Wall}
+  \item In the \code{move} method (after \code{new_x} and \code{new_y} have
+    been calculated and corrected), call the collision detection:
+    \code{Wall.collision(new_x, new_y)}
+  \end{alist}
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{499.6}
+\textbf{Test whether bricks now disappear on contact with a ball.} The ball
+should fly through the bricks like a knife through butter -- because its
+course currently remains completely unaffected. We only check whether it hits
+a brick -- and then remove that brick.
+\end{region}
+
+\begin{region}[pitch=13.35]{540.2}
+\begin{ntasks}[start=2]
+\item \textbf{Now comes today's grand finale.}\\
+  On contact with a brick, the ball should not only make the brick disappear
+  but also bounce off. To do this, change the call in the \code{move} method
+  of the class \code{Ball} to:
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{580.4}
+\begin{lstlisting}[style=plain]
+self.vx, self.vy = Wall.collision(self.x, self.y, new_x, new_y,
+                                  self.vx, self.vy)
+\end{lstlisting}
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.4]{607.1}
+Now the old position (\code{self.x}, \code{self.y}), the new position
+(\code{new_x}, \code{new_y}), and the current velocity vector
+(\code{self.vx}, \code{self.vy}) are passed.\\
+The method should now return a (possibly adjusted) velocity vector. Now it is
+your turn to extend \code{Wall.collision(...)} accordingly:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.6]{661.5}
+\begin{ntasks}
+\item If the \textbf{top or bottom edge} of a brick is smashed through, the
+  \textbf{y-component} of the velocity vector should be ``reversed''.
+\item If the \textbf{left or right edge} of a brick is smashed through, the
+  \textbf{x-component} of the velocity vector should be ``reversed''.
+\item If \textbf{both indices} change, the ball bounces off a corner -- and
+  \textbf{both components} should be negated.
+\end{ntasks}
+\end{region}
+
+\begin{region}[x=74.7,right=0]{744.0}
+Test whether the ball now bounces off correctly and removes the brick. If it
+all works:
+\end{region}
+
+\begin{region}[x=74.7,right=0,pitch=13.2]{757.4}
+\code{git commit -a -m "bricks can take a hit now"}\\
+\code{git push}
+\end{region}
+
+\end{document}

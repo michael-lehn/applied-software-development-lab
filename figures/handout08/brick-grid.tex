@@ -1,0 +1,27 @@
+% Grid of 30 x 10 brick cells on the 800 x 600 drawing surface
+% (Lab Handout 8, Step 5). Coordinates in pixels of the original
+% 2000 x 996 sketch.
+\begin{tikzpicture}[x=0.24095bp,y=-0.24095bp,
+    crd/.style={anchor=base,inner sep=0,font=\fontsize{6.2bp}{7.4bp}\figserif},
+    axl/.style={anchor=base west,inner sep=0,font=\fontsize{6.2bp}{7.4bp}\selectfont}]
+  \definecolor{figbrick}{HTML}{F05FA7}
+  \useasboundingbox (0,0) rectangle (2000,996);
+  % cells occupied by bricks
+  \fill[figbrick] (99,{55+5*28.4333}) rectangle (1861,{55+10*28.4333});
+  % grid: 10 columns, 30 rows
+  \foreach \i in {0,...,30}
+    \draw[line width=0.3bp] (99,{55+\i*28.4333}) -- (1861,{55+\i*28.4333});
+  \foreach \j in {0,...,10}
+    \draw[line width=0.3bp] ({99+\j*176.2},55) -- ({99+\j*176.2},908);
+  % axes
+  \draw[line width=0.4bp,-{Stealth[length=3bp,width=2.5bp]}] (99,55) -- (1902,55);
+  \draw[line width=0.4bp,-{Stealth[length=3bp,width=2.5bp]}] (99,55) -- (99,946);
+  \foreach \p in {(99,55),(1861,55),(99,908),(1861,908)}
+    \fill \p +(-6,-6) rectangle +(6,6);
+  \node[crd] at (55,35) {(0,0)};
+  \node[crd] at (1858,30) {(800,0)};
+  \node[axl] at (1876,82) {{\figserif\itshape x}-axis};
+  \node[crd] at (44,935) {(0,600)};
+  \node[axl] at (40,982) {{\figserif\itshape y}-axis};
+  \node[crd] at (1858,950) {(800,600)};
+\end{tikzpicture}
