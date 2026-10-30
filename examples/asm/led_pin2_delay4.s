@@ -2,9 +2,9 @@
 	out	0x0a,	r19
 	ldi	r18,	0
 loop:
-	; pulse width: (r24r23r22r21 * 6 + 7) * 62.5ns
-	; r24r23r22r21 = 1 => 13 cycles => 812.5ns
-	; r24r23r22r21 = 2 => 19 cycles => 1187.5ns
+	; pulse width: (r27r26r25r24 * 6 + 7) * 62.5ns
+	; r27r26r25r24 = 1 => 13 cycles => 812.5ns
+	; r27r26r25r24 = 2 => 19 cycles => 1187.5ns
 	eor	r18,	r19	    ; 1 cycle
 	out	0x0b,	r18	    ; 1 cycle
 
